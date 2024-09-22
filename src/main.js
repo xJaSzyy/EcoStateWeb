@@ -1,8 +1,24 @@
 import './assets/main.css'
 
-import { createApp, createBlock } from 'vue'
+import { createApp } from 'vue'
 import App from './App.vue'
-import Header from './Header.vue'
+import { createRouter, createWebHistory } from 'vue-router';
 
-createApp(App).mount('#app')
-createApp(Header).mount('#header')
+import Main from './components/Main.vue';
+import Login from './components/Login.vue';
+import Registration from './components/Registration.vue';
+
+const routes = [
+    { path: '/', component: Main },
+    { path: '/login', component: Login },
+    { path: '/registration', component: Registration }
+];
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes,
+  });
+
+const app = createApp(App)
+app.use(router)
+app.mount('#app')

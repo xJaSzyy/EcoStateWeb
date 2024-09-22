@@ -1,8 +1,24 @@
 <script>
-  
+export default {
+  name: 'Header',
+  methods: {
+    goToMain() {
+      this.$router.push('/');
+    },
+
+    goToLogin() {
+      this.$router.push('/login');
+    },
+    goToRegistration() {
+      this.$router.push('/registration');
+    }
+  }
+}
 </script>
+
 <template>
-    <a href="index.html" class="logo">
+  <header>
+    <a @click="goToMain" class="logo">
         <svg class="logo_img" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <rect width="64" height="64" fill="url(#pattern0_228_357)"/>
         <defs>
@@ -15,9 +31,10 @@
         <span>EcoState</span>
     </a>
     <div class="buttons">
-        <button onclick="location.href='login.html'">Вход</button>
-        <button onclick="location.href='registration.html'">Регистрация</button> 
+        <button @click="goToLogin">Вход</button>
+        <button @click="goToRegistration()">Регистрация</button> 
     </div>
+  </header>
 </template>
 
 <style>
