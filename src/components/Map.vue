@@ -10,11 +10,19 @@ export default {
   mounted() {
     const coord = [55.355198, 86.086847];
 
-    const map = L.map("map").setView(coord, 12);
+    const map = L.map("map", {
+      zoomControl: false,
+    }).setView(coord, 12);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
     }).addTo(map);
+
+    L.control
+      .zoom({
+        position: "topright", 
+      })
+      .addTo(map);
 
     const circlesData = [
       {
@@ -47,7 +55,7 @@ export default {
 
       circle.bindPopup(`<b>${data.info}</b><br>Радиус: ${data.radius} метров`);
     });
-  }
+  },
 };
 </script>
 
@@ -66,5 +74,11 @@ body {
 
 .leaflet-control-attribution {
   display: none;
+}
+
+.leaflet-top.leaflet-right {
+  top: 50%;
+  transform: translateY(-50%); 
+  right: 10px;          
 }
 </style>
