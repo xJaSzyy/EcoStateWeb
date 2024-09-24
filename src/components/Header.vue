@@ -61,7 +61,7 @@ header .buttons {
   display: inline-block;
   vertical-align: middle;
   margin-left: auto;
-  margin-right: 48px;
+  margin-right: 12px;
 }
 
 header .buttons button {
@@ -87,6 +87,6 @@ header .buttons button:last-child {
 
 .logo_img {
   margin-right: 20px;
-  margin-left: 20px;
+  margin-left: 4px;
 }
 </style>

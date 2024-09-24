@@ -1,12 +1,17 @@
 <template>
+  <Header/>
   <div id="map" style="height: 100vh; width: 100%"></div>
 </template>
 
 <script>
+import Header from './Header.vue';
 import L from "leaflet";
 
 export default {
   name: "Map",
+  components: {
+    Header
+  },
   mounted() {
     const coord = [55.355198, 86.086847];
 
@@ -80,5 +85,13 @@ body {
   top: 50%;
   transform: translateY(-50%); 
   right: 10px;          
+}
+
+header {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+header .buttons button {
+  background-color: rgba(0, 0, 0, 0);
 }
 </style>

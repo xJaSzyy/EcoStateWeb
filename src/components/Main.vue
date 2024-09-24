@@ -1,5 +1,5 @@
 <script>
-import Header from "../Header.vue";
+import Header from "./Header.vue";
 
 export default {
   name: "Main",
@@ -477,7 +477,7 @@ export default {
 .circle_menu {
   position: absolute;
   top: 50%; 
-  left: 45px; 
+  left: 32px; 
   transform: translateY(-50%); 
   max-width: 90vh; 
   max-height: 90vh; 
