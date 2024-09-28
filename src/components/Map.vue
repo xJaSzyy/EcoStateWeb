@@ -1,7 +1,7 @@
 <template>
   <Header />
   <div id="map" style="height: 100vh; width: 100%"></div>
-  <div id="weather-info" class="weather-panel">test</div>
+  <div id="weather-info" class="weather-panel">Loading data...</div>
 </template>
 
 <script>
@@ -17,17 +17,61 @@ export default {
   data() {
     return {
       arrowIcon: arrowIcon,
+      circlesData: [
+        {
+          coords: [55.350685, 85.995976],
+          radius: 250,
+          info: "Азот",
+          color: "red",
+        },
+        {
+          coords: [55.359522, 86.069663],
+          radius: 250,
+          info: "СКЭК",
+          color: "green",
+        },
+        {
+          coords: [55.343786, 86.093681],
+          radius: 250,
+          info: "Кузнецкая проектная компания",
+          color: "orange",
+        },
+      ],
     };
   },
   mounted() {
-    const fetchWeatherData = () => {
+    this.fetchWeatherData();
+
+    setInterval(this.fetchWeatherData, 60000);
+    const coord = [55.355198, 86.086847];
+
+    const map = L.map("map", {
+      zoomControl: false,
+    }).setView(coord, 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+
+    L.control
+      .zoom({
+        position: "topright",
+      })
+      .addTo(map);
+
+    this.circlesData.forEach((data, index) => {
+      this.fetchMathData(data.coords, data.color, data.info, map);
+    });
+  },
+  methods: {
+    async fetchWeatherData() {
       fetch("http://127.0.0.1:8000/weather?city=Kemerovo")
         .then((response) => response.json())
         .then((data) => {
           const currentTime = new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
-          }); 
+          });
 
           const weatherInfo = `
           <div class="weather-row">
@@ -52,58 +96,32 @@ export default {
           }
         })
         .catch((error) => console.error("Ошибка при запросе погоды:", error));
-    };
+    },
+    async fetchMathData(coords, color, info, map) {
+      try {
+        const response = await fetch(
+          "https://localhost:7017/api/concentration/random"
+        );
+        const data = await response.json();
 
-    fetchWeatherData();
+        const maxElement = Math.max(...data.sp);
 
-    setInterval(fetchWeatherData, 60000);
-    const coord = [55.355198, 86.086847];
+        const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
 
-    const map = L.map("map", {
-      zoomControl: false,
-    }).setView(coord, 12);
+        const circle = L.circle(coords, {
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.5,
+          radius: maxConcentrationDistance,
+        }).addTo(map);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-
-    L.control
-      .zoom({
-        position: "topright",
-      })
-      .addTo(map);
-
-    const circlesData = [
-      {
-        coords: [55.350685, 85.995976],
-        radius: 250,
-        info: "Азот",
-        color: "red",
-      },
-      {
-        coords: [55.359522, 86.069663],
-        radius: 250,
-        info: "СКЭК",
-        color: "green",
-      },
-      {
-        coords: [55.343786, 86.093681],
-        radius: 250,
-        info: "Кузнецкая проектная компания",
-        color: "orange",
-      },
-    ];
-
-    circlesData.forEach(function (data) {
-      const circle = L.circle(data.coords, {
-        color: data.color,
-        fillColor: data.color,
-        fillOpacity: 0.5,
-        radius: data.radius,
-      }).addTo(map);
-
-      circle.bindPopup(`<b>${data.info}</b><br>Радиус: ${data.radius} метров`);
-    });
+        circle.bindPopup(
+          `<b>${info}</b><br>Радиус: ${maxConcentrationDistance} метров`
+        );
+      } catch (error) {
+        console.error("Ошибка при запросе данных:", error);
+      }
+    },
   },
 };
 </script>
@@ -144,28 +162,28 @@ header .buttons button {
 }
 
 #weather-info {
-  position: absolute; 
-  top: 20%; 
-  right: 20px; 
-  transform: translateY(-50%); 
+  position: absolute;
+  top: 20%;
+  right: 20px;
+  transform: translateY(-50%);
 
-  background-color: rgba(212, 212, 212, 0.8); 
+  background-color: rgba(212, 212, 212, 0.8);
   padding: 8px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 128px; 
+  width: 128px;
   font-family: Arial, sans-serif;
 
   display: flex;
   flex-direction: column;
-  gap: 0px; 
+  gap: 0px;
 }
 
 .weather-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0px; 
+  gap: 0px;
   margin: 0px 12px;
 }
 
@@ -175,5 +193,4 @@ header .buttons button {
   margin-left: 10px;
   margin-bottom: 8px;
 }
-
 </style>
