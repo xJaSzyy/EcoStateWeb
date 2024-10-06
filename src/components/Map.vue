@@ -2,6 +2,9 @@
   <Header />
   <div id="map" style="height: 100vh; width: 100%"></div>
   <div id="weather-info" class="weather-panel">Loading data...</div>
+  <svg width="0" height="0" id="gradients">
+    <defs></defs>
+  </svg>
 </template>
 
 <script>
@@ -19,22 +22,28 @@ export default {
       arrowIcon: arrowIcon,
       circlesData: [
         {
+          id: 1,
           coords: [55.350685, 85.995976],
           radius: 250,
           info: "Азот",
-          color: "red",
+          centerColor: "rgba(255, 0, 0, 0.5)", // Красный в центре
+          edgeColor: "rgba(255, 255, 0, 0.5)", // Желтый на краях
         },
         {
+          id: 2,
           coords: [55.359522, 86.069663],
           radius: 250,
           info: "СКЭК",
-          color: "green",
+          centerColor: "rgba(0, 255, 0, 0.5)", // Зеленый в центре
+          edgeColor: "rgba(0, 0, 255, 0.5)", // Синий на краях
         },
         {
+          id: 3,
           coords: [55.343786, 86.093681],
           radius: 250,
           info: "Кузнецкая проектная компания",
-          color: "orange",
+          centerColor: "rgba(0, 0, 255, 0.5)", // Синий в центре
+          edgeColor: "rgba(255, 0, 255, 0.5)", // Фиолетовый на краях
         },
       ],
     };
@@ -60,10 +69,54 @@ export default {
       .addTo(map);
 
     this.circlesData.forEach((data, index) => {
-      this.fetchMathData(data.coords, data.color, data.info, map);
+      // Для каждой точки делаем запрос на данные
+      this.fetchMathData(data.coords, data.centerColor, data.info, map);
     });
   },
   methods: {
+    createGradient(centerColor, edgeColor, id, map, data) {
+      const gradientId = `gradient-${id}`;
+
+      const defs = document.getElementById("gradients").querySelector("defs");
+      const gradient = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "linearGradient"
+      );
+      gradient.setAttribute("id", gradientId);
+      gradient.setAttribute("x1", "0%");
+      gradient.setAttribute("y1", "0%");
+      gradient.setAttribute("x2", "100%");
+      gradient.setAttribute("y2", "100%");
+
+      const stop1 = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "stop"
+      );
+      stop1.setAttribute("offset", "0%");
+      stop1.setAttribute("style", `stop-color:${centerColor}; stop-opacity:1`);
+      gradient.appendChild(stop1);
+
+      const stop2 = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "stop"
+      );
+      stop2.setAttribute("offset", "100%");
+      stop2.setAttribute("style", `stop-color:${edgeColor}; stop-opacity:1`);
+      gradient.appendChild(stop2);
+
+      defs.appendChild(gradient);
+
+      // Используем координаты из circlesData
+      const circle = L.circle(data.coords, {
+        // Замените на data.coords
+        color: "transparent",
+        fillColor: `url(#${gradientId})`,
+        fillOpacity: 1,
+        radius: data.radius,
+      }).addTo(map);
+
+      circle.bindPopup(`<b>${data.info}</b><br>Радиус: ${data.radius} метров`);
+    },
     async fetchWeatherData() {
       fetch("http://127.0.0.1:8000/weather?city=Kemerovo")
         .then((response) => response.json())
@@ -105,13 +158,12 @@ export default {
         const data = await response.json();
 
         const maxElement = Math.max(...data.sp);
-
         const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
 
         const circle = L.circle(coords, {
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.5,
+          color: "transparent",
+          fillColor: color, 
+          fillOpacity: 1,
           radius: maxConcentrationDistance,
         }).addTo(map);
 
