@@ -64,7 +64,7 @@ export default {
 
         const circleStyle = new Style({
           fill: new Fill({
-            color: interpolatedColor,
+            color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.5)`,
           })
         });
 
@@ -90,6 +90,12 @@ export default {
       });
       return `#${result.join('')}`;
     },
+    hexToRgb(hex) {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  return `${r}, ${g}, ${b}`;
+},
   },
 };
 </script>
