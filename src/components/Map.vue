@@ -1,5 +1,6 @@
 <template>
   <Header />
+  <WeatherInfo />
   <div id="map" style="height: 100vh; width: 100%"></div>
   <div id="weather-info" class="weather-panel">Loading data...</div>
   <svg width="0" height="0" id="gradients">
@@ -9,17 +10,18 @@
 
 <script>
 import Header from "./Header.vue";
+import WeatherInfo from "./WeatherInfo.vue";
+import WeatherInfo from "./WeatherInfo.vue";
 import L from "leaflet";
-import arrowIcon from "../assets/arrow.png";
 
 export default {
   name: "Map",
   components: {
     Header,
+    WeatherInfo
   },
   data() {
     return {
-      arrowIcon: arrowIcon,
       circlesData: [
         {
           id: 1,
@@ -49,9 +51,6 @@ export default {
     };
   },
   mounted() {
-    this.fetchWeatherData();
-
-    setInterval(this.fetchWeatherData, 60000);
     const coord = [55.355198, 86.086847];
 
     const map = L.map("map", {
@@ -117,39 +116,6 @@ export default {
 
       circle.bindPopup(`<b>${data.info}</b><br>Радиус: ${data.radius} метров`);
     },
-    async fetchWeatherData() {
-      fetch("http://127.0.0.1:8000/weather?city=Kemerovo")
-        .then((response) => response.json())
-        .then((data) => {
-          const currentTime = new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
-          const weatherInfo = `
-          <div class="weather-row">
-            <span>${data.temperature}°C</span>
-            <img src="https://openweathermap.org/img/wn/${data.icon}@2x.png" style="width: 48px; height: 48px;">
-          </div>
-          <div class="weather-row">
-            <span>${data.wind_speed} м/с</span>
-            <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.wind_direction}deg)">
-          </div>
-          <div class="weather-time">
-            ${currentTime}
-          </div>
-          `;
-
-          const weatherElement = document.getElementById("weather-info");
-          if (weatherElement) {
-            weatherElement.innerHTML = weatherInfo;
-            console.log(new Date().toLocaleTimeString());
-          } else {
-            console.log("Элемент для отображения погоды не найден");
-          }
-        })
-        .catch((error) => console.error("Ошибка при запросе погоды:", error));
-    },
     async fetchMathData(coords, color, info, map) {
       try {
         const response = await fetch(
@@ -185,10 +151,6 @@ export default {
   overflow: hidden;
 }
 
-#weather-info {
-  z-index: 1000;
-}
-
 body {
   height: 100%;
   width: 100%;
@@ -211,38 +173,5 @@ header {
 
 header .buttons button {
   background-color: rgba(0, 0, 0, 0);
-}
-
-#weather-info {
-  position: absolute;
-  top: 20%;
-  right: 20px;
-  transform: translateY(-50%);
-
-  background-color: rgba(212, 212, 212, 0.8);
-  padding: 8px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 128px;
-  font-family: Arial, sans-serif;
-
-  display: flex;
-  flex-direction: column;
-  gap: 0px;
-}
-
-.weather-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0px;
-  margin: 0px 12px;
-}
-
-.weather-time {
-  margin-top: 16px;
-  margin-right: 12px;
-  margin-left: 10px;
-  margin-bottom: 8px;
 }
 </style>

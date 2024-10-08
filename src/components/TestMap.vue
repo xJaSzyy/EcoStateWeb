@@ -1,8 +1,13 @@
 <template>
+  <Header :showButtons="false" :isTransparent="true" />
+  <WeatherInfo />
   <div id="map" class="map"></div>
 </template>
 
 <script>
+import Header from "./Header.vue";
+import WeatherInfo from "./WeatherInfo.vue";
+
 import 'ol/ol.css';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
@@ -16,22 +21,23 @@ import { Style, Fill } from 'ol/style';
 
 export default {
   name: 'MapComponent',
+  components: {
+    Header,
+    WeatherInfo
+  },
   data() {
     return {
       circlesData: [
         { lon: 85.995976, lat: 55.350685, radius: 0, gradientColors: ['#ff0000', '#ffff00', '#00ff00'] },
         { lon: 86.069663, lat: 55.359522, radius: 0, gradientColors: ['#ff0000', '#ffff00', '#00ff00'] },
-        // Можно добавить больше кругов
       ],
       map: null,
       vectorSource: new VectorSource(),
     };
   },
   async mounted() {
-    // Сначала загружаем радиусы всех кругов
     await this.fetchAllCirclesData();
 
-    // Затем создаем карту после получения данных
     this.initializeMap();
     this.drawCircles();
   },
@@ -48,6 +54,7 @@ export default {
           center: fromLonLat([86.087314, 55.354968]),
           zoom: 12,
         }),
+        controls: [],
       });
 
       const vectorLayer = new VectorLayer({
@@ -57,11 +64,11 @@ export default {
     },
     async fetchAllCirclesData() {
       const promises = this.circlesData.map((_, index) => this.fetchMathData(index));
-      await Promise.all(promises);  // Ждем завершения всех запросов
+      await Promise.all(promises); 
     },
     drawCircles() {
       this.circlesData.forEach((circle) => {
-        const steps = 16; // Количество шагов для градиента
+        const steps = 16; 
         const stepRadius = circle.radius / steps;
 
         for (let i = 0; i < steps; i++) {

@@ -1,11 +1,20 @@
 <script>
 export default {
   name: 'Header',
+  props: {
+    showButtons: {
+      type: Boolean,
+      default: true
+    },
+    isTransparent: {
+      type: Boolean,
+      default: false
+    }
+  },
   methods: {
     goToMain() {
       this.$router.push('/');
     },
-
     goToLogin() {
       this.$router.push('/login');
     },
@@ -17,7 +26,7 @@ export default {
 </script>
 
 <template>
-  <header>
+  <header :class="{ transparent: isTransparent }">
     <a @click="goToMain" class="logo">
         <svg class="logo_img" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <rect width="64" height="64" fill="url(#pattern0_228_357)"/>
@@ -30,7 +39,7 @@ export default {
         </svg>    
         <span>EcoState</span>
     </a>
-    <div class="buttons">
+    <div class="buttons" v-if="showButtons">
         <button @click="goToLogin">Вход</button>
         <button @click="goToRegistration()">Регистрация</button> 
     </div>
@@ -42,6 +51,10 @@ header, .logo {
   display: flex;
   align-items: center; 
   padding: 10px;
+}
+
+header.transparent {
+  background-color: transparent;
 }
 
 header .logo {
