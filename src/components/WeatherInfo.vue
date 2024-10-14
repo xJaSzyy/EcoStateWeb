@@ -9,11 +9,16 @@ export default {
   name: "WeatherInfo",
   data() {
       return {
-        arrowIcon: arrowIcon
+        arrowIcon: arrowIcon,
+        windDirection: 0
       }
   },
+  watch: {
+    windDirection(newVal) {
+      this.$emit("windDirectionChanged", newVal);
+    },
+  },
   mounted() {
-    console.log("test")
     this.fetchWeatherData();
 
     setInterval(this.fetchWeatherData, 60000);
@@ -41,6 +46,8 @@ export default {
             ${currentTime}
           </div>
           `;
+          
+          this.windDirection = data.wind_direction;
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {

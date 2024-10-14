@@ -43,6 +43,17 @@ export default {
         <button @click="goToLogin">Вход</button>
         <button @click="goToRegistration()">Регистрация</button> 
     </div>
+    <div class="tools" v-if="!showButtons">
+      <select name="layer" id="layer-select">
+        <option value="">Выберите слой</option>
+        <option value="layer1">Layer 1</option>
+        <option value="layer2">Layer 2</option>
+        <option value="layer3">Layer 3</option>
+        <option value="layer4">Layer 4</option>
+      </select>
+      <button>Инструмент1</button>
+      <button>Инструмент2</button>
+    </div>
   </header>
 </template>
 
@@ -70,7 +81,7 @@ header .logo span {
   font-family: 'MS PGothic';
 }
 
-header .buttons {
+header .buttons, .tools {
   display: inline-block;
   vertical-align: middle;
   margin-left: auto;

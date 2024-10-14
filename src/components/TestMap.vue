@@ -1,6 +1,6 @@
 <template>
   <Header :showButtons="false" :isTransparent="true" />
-  <WeatherInfo />
+  <WeatherInfo @windDirectionChanged="updateWindDirection" />
   <div id="map" class="map"></div>
 </template>
 
@@ -8,43 +8,54 @@
 import Header from "./Header.vue";
 import WeatherInfo from "./WeatherInfo.vue";
 
-import 'ol/ol.css';
-import { Map, View } from 'ol';
-import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import { Circle as CircleGeom } from 'ol/geom';
-import Feature from 'ol/Feature';
-import { fromLonLat } from 'ol/proj';
-import { Style, Fill } from 'ol/style';
+import "ol/ol.css";
+import { Map, View } from "ol";
+import TileLayer from "ol/layer/Tile";
+import OSM from "ol/source/OSM";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { Circle as CircleGeom } from "ol/geom";
+import Feature from "ol/Feature";
+import { fromLonLat } from "ol/proj";
+import { Style, Fill } from "ol/style";
+import { Polygon } from "ol/geom";
 
 export default {
-  name: 'MapComponent',
+  name: "MapComponent",
   components: {
     Header,
-    WeatherInfo
+    WeatherInfo,
   },
   data() {
     return {
       circlesData: [
-        { lon: 85.995976, lat: 55.350685, radius: 0, gradientColors: ['#ff0000', '#ffff00', '#00ff00'] },
-        { lon: 86.069663, lat: 55.359522, radius: 0, gradientColors: ['#ff0000', '#ffff00', '#00ff00'] },
+        {
+          lon: 85.995976,
+          lat: 55.350685,
+          radius: 0,
+          gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
+        },
+        {
+          lon: 86.069663,
+          lat: 55.359522,
+          radius: 0,
+          gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
+        },
       ],
       map: null,
       vectorSource: new VectorSource(),
+      windDirection: 0,
     };
   },
   async mounted() {
     await this.fetchAllCirclesData();
 
     this.initializeMap();
-    this.drawCircles();
   },
   methods: {
     initializeMap() {
       this.map = new Map({
-        target: 'map',
+        target: "map",
         layers: [
           new TileLayer({
             source: new OSM(),
@@ -63,12 +74,14 @@ export default {
       this.map.addLayer(vectorLayer);
     },
     async fetchAllCirclesData() {
-      const promises = this.circlesData.map((_, index) => this.fetchMathData(index));
-      await Promise.all(promises); 
+      const promises = this.circlesData.map((_, index) =>
+        this.fetchMathData(index)
+      );
+      await Promise.all(promises);
     },
     drawCircles() {
       this.circlesData.forEach((circle) => {
-        const steps = 16; 
+        const steps = 16;
         const stepRadius = circle.radius / steps;
 
         for (let i = 0; i < steps; i++) {
@@ -76,13 +89,24 @@ export default {
           let interpolatedColor;
 
           if (fraction < 0.5) {
-            interpolatedColor = this.interpolateColor(circle.gradientColors[0], circle.gradientColors[1], fraction * 2);
+            interpolatedColor = this.interpolateColor(
+              circle.gradientColors[0],
+              circle.gradientColors[1],
+              fraction * 2
+            );
           } else {
-            interpolatedColor = this.interpolateColor(circle.gradientColors[1], circle.gradientColors[2], (fraction - 0.5) * 2);
+            interpolatedColor = this.interpolateColor(
+              circle.gradientColors[1],
+              circle.gradientColors[2],
+              (fraction - 0.5) * 2
+            );
           }
 
           const feature = new Feature({
-            geometry: new CircleGeom(fromLonLat([circle.lon, circle.lat]), circle.radius - i * stepRadius),
+            geometry: new CircleGeom(
+              fromLonLat([circle.lon, circle.lat]),
+              circle.radius - i * stepRadius
+            ),
           });
 
           const circleStyle = new Style({
@@ -96,28 +120,96 @@ export default {
         }
       });
     },
+    drawTriangles() {
+      this.circlesData.forEach((circle) => {
+        const baseRadius = circle.radius * 2;
+        const heightRadius = circle.radius * 3;
+        const center = fromLonLat([circle.lon, circle.lat]);
+
+        const windAngleRad =
+          0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
+        const halfBaseAngle = Math.PI / 6;
+
+        const gradientSteps = 16;
+        for (let i = 0; i < gradientSteps; i++) {
+          const fraction = i / gradientSteps;
+          const interpolatedColor = this.interpolateColor(
+            circle.gradientColors[0],
+            circle.gradientColors[2],
+            fraction
+          );
+
+          const scaledRadius = baseRadius * (1 - fraction);
+          const scaledHeightRadius = heightRadius * (1 - fraction);
+
+          const scaledBaseVertex1 = [
+            center[0] + scaledRadius * Math.cos(windAngleRad - halfBaseAngle),
+            center[1] + scaledRadius * Math.sin(windAngleRad - halfBaseAngle),
+          ];
+          const scaledBaseVertex2 = [
+            center[0] + scaledRadius * Math.cos(windAngleRad + halfBaseAngle),
+            center[1] + scaledRadius * Math.sin(windAngleRad + halfBaseAngle),
+          ];
+
+          const tipVertex = [
+            center[0] + scaledHeightRadius * Math.cos(windAngleRad),
+            center[1] + scaledHeightRadius * Math.sin(windAngleRad),
+          ];
+
+          const triangleCoordinates = [
+            scaledBaseVertex1,
+            scaledBaseVertex2,
+            tipVertex,
+            scaledBaseVertex1,
+          ];
+
+          const triangleFeature = new Feature({
+            geometry: new Polygon([triangleCoordinates]),
+          });
+
+          const triangleStyle = new Style({
+            fill: new Fill({
+              color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.5)`,
+            }),
+          });
+
+          triangleFeature.setStyle(triangleStyle);
+          this.vectorSource.addFeature(triangleFeature);
+        }
+      });
+    },
+    updateWindDirection(newDirection) {
+      this.vectorSource.clear();
+      this.windDirection = newDirection;
+      this.drawTriangles();
+      this.drawCircles();
+    },
     async fetchMathData(index) {
       try {
-        const response = await fetch("https://localhost:7017/api/concentration/random");
+        const response = await fetch(
+          "https://localhost:7017/api/concentration/random"
+        );
         const data = await response.json();
 
         const maxElement = Math.max(...data.sp);
         const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
 
         this.circlesData[index].radius = maxConcentrationDistance;
-        console.log(maxConcentrationDistance);
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
     },
     interpolateColor(color1, color2, factor) {
-      const result = color1.slice(1).match(/.{2}/g).map((hex, i) => {
-        const c1 = parseInt(hex, 16);
-        const c2 = parseInt(color2.slice(1).match(/.{2}/g)[i], 16);
-        const mix = Math.round(c1 + (c2 - c1) * factor);
-        return mix.toString(16).padStart(2, '0');
-      });
-      return `#${result.join('')}`;
+      const result = color1
+        .slice(1)
+        .match(/.{2}/g)
+        .map((hex, i) => {
+          const c1 = parseInt(hex, 16);
+          const c2 = parseInt(color2.slice(1).match(/.{2}/g)[i], 16);
+          const mix = Math.round(c1 + (c2 - c1) * factor);
+          return mix.toString(16).padStart(2, "0");
+        });
+      return `#${result.join("")}`;
     },
     hexToRgb(hex) {
       let r = parseInt(hex.slice(1, 3), 16);
