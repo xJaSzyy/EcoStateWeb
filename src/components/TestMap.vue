@@ -30,12 +30,14 @@ export default {
     return {
       circlesData: [
         {
+          name: "test boiler 1",
           lon: 85.995976,
           lat: 55.350685,
           radius: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
         {
+          name: "test boiler 2",
           lon: 86.069663,
           lat: 55.359522,
           radius: 0,
@@ -48,9 +50,14 @@ export default {
     };
   },
   async mounted() {
+    this.initializeMap();
+
     await this.fetchAllCirclesData();
 
-    this.initializeMap();
+    setInterval(async () => {
+      await this.fetchAndUpdateData();
+    }, 3600000);
+
   },
   methods: {
     initializeMap() {
@@ -72,6 +79,11 @@ export default {
         source: this.vectorSource,
       });
       this.map.addLayer(vectorLayer);
+    },
+    async fetchAndUpdateData() {
+      await this.fetchAllCirclesData();
+      this.vectorSource.clear(); 
+      this.drawTriangles(); 
     },
     async fetchAllCirclesData() {
       const promises = this.circlesData.map((_, index) =>
@@ -200,8 +212,32 @@ export default {
         const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
 
         this.circlesData[index].radius = maxConcentrationDistance;
+
+        this.saveMathData({
+            name: this.circlesData[index].name,
+            sp: data.sp,
+            so2: data.so2,
+            no: data.no,
+            no2: data.no2,
+            co2: data.co2,
+          });
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
+      }
+    },
+    async saveMathData(weatherData) {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/save_math_boiler/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(weatherData),
+        });
+        const result = await response.json();
+        console.log("Результат сохранения данных:", result);
+      } catch (error) {
+        console.error("Ошибка при сохранении данных:", error);
       }
     },
     interpolateColor(color1, color2, factor) {

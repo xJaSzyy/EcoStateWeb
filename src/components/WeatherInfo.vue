@@ -28,7 +28,7 @@ export default {
 
     setInterval(this.updateTime, 1000);
 
-    setInterval(this.fetchWeatherData, 60000);
+    setInterval(this.fetchWeatherData, 600000);
   },
   methods: {
     async fetchWeatherData() {
@@ -55,8 +55,29 @@ export default {
           if (weatherElement) {
             weatherElement.innerHTML = weatherInfo;
           }
+
+          this.saveWeatherData({
+            temperature: data.temperature,
+            wind_speed: data.wind_speed,
+            wind_direction: data.wind_direction,
+          });
         })
         .catch((error) => console.error("Error weather request", error));
+    },
+    async saveWeatherData(weatherData) {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/save_weather/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(weatherData),
+        });
+        const result = await response.json();
+        console.log("Результат сохранения данных:", result);
+      } catch (error) {
+        console.error("Ошибка при сохранении данных:", error);
+      }
     },
     updateTime() {
       this.currentTime = new Date().toLocaleTimeString([], {
