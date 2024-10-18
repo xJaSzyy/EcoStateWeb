@@ -8,10 +8,14 @@ import arrowIcon from "../assets/arrow.png";
 export default {
   name: "WeatherInfo",
   data() {
-      return {
-        arrowIcon: arrowIcon,
-        windDirection: 0
-      }
+    return {
+      arrowIcon: arrowIcon,
+      windDirection: 0,
+      currentTime: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
   },
   watch: {
     windDirection(newVal) {
@@ -20,6 +24,9 @@ export default {
   },
   mounted() {
     this.fetchWeatherData();
+    this.updateTime();
+
+    setInterval(this.updateTime, 1000);
 
     setInterval(this.fetchWeatherData, 60000);
   },
@@ -28,11 +35,6 @@ export default {
       fetch("http://127.0.0.1:8000/weather?city=Kemerovo")
         .then((response) => response.json())
         .then((data) => {
-          const currentTime = new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
           const weatherInfo = `
           <div class="weather-row">
             <span>${data.temperature}°C</span>
@@ -43,21 +45,33 @@ export default {
             <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.wind_direction}deg)">
           </div>
           <div class="weather-time">
-            ${currentTime}
+            ${this.currentTime}
           </div>
           `;
-          
+
           this.windDirection = data.wind_direction;
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {
             weatherElement.innerHTML = weatherInfo;
-            console.log(new Date().toLocaleTimeString());
-          } else {
-            console.log("Элемент для отображения погоды не найден");
           }
         })
-        .catch((error) => console.error("Ошибка при запросе погоды:", error));
+        .catch((error) => console.error("Error weather request", error));
+    },
+    updateTime() {
+      this.currentTime = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+
+      const weatherElement = document.getElementById("weather-info");
+      if (weatherElement) {
+        const timeElement = weatherElement.querySelector(".weather-time");
+        if (timeElement) {
+          timeElement.textContent = this.currentTime;
+        }
+      }
     },
   },
 };

@@ -128,16 +128,26 @@ export default {
 
         const windAngleRad =
           0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
-        const halfBaseAngle = Math.PI / 6;
+        const halfBaseAngle = Math.PI / 12;
 
-        const gradientSteps = 16;
+        const gradientSteps = 12;
         for (let i = 0; i < gradientSteps; i++) {
           const fraction = i / gradientSteps;
-          const interpolatedColor = this.interpolateColor(
-            circle.gradientColors[0],
-            circle.gradientColors[2],
-            fraction
-          );
+          let interpolatedColor;
+
+          if (fraction < 0.5) {
+            interpolatedColor = this.interpolateColor(
+              circle.gradientColors[0],
+              circle.gradientColors[1],
+              fraction * 2
+            );
+          } else {
+            interpolatedColor = this.interpolateColor(
+              circle.gradientColors[1],
+              circle.gradientColors[2],
+              (fraction - 0.5) * 2
+            );
+          }
 
           const scaledRadius = baseRadius * (1 - fraction);
           const scaledHeightRadius = heightRadius * (1 - fraction);
@@ -151,16 +161,11 @@ export default {
             center[1] + scaledRadius * Math.sin(windAngleRad + halfBaseAngle),
           ];
 
-          const tipVertex = [
-            center[0] + scaledHeightRadius * Math.cos(windAngleRad),
-            center[1] + scaledHeightRadius * Math.sin(windAngleRad),
-          ];
-
           const triangleCoordinates = [
+            center,
             scaledBaseVertex1,
             scaledBaseVertex2,
-            tipVertex,
-            scaledBaseVertex1,
+            center,
           ];
 
           const triangleFeature = new Feature({
@@ -169,7 +174,7 @@ export default {
 
           const triangleStyle = new Style({
             fill: new Fill({
-              color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.5)`,
+              color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.25)`,
             }),
           });
 
@@ -182,7 +187,7 @@ export default {
       this.vectorSource.clear();
       this.windDirection = newDirection;
       this.drawTriangles();
-      this.drawCircles();
+      //this.drawCircles();
     },
     async fetchMathData(index) {
       try {
