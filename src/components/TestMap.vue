@@ -1,12 +1,14 @@
 <template>
   <Header :showButtons="false" :isTransparent="true" />
   <WeatherInfo @windDirectionChanged="updateWindDirection" />
+  <Popup v-if="isPopupVisible" />
   <div id="map" class="map"></div>
 </template>
 
 <script>
 import Header from "./Header.vue";
 import WeatherInfo from "./WeatherInfo.vue";
+import Popup from "./Popup.vue";
 
 import "ol/ol.css";
 import { Map, View } from "ol";
@@ -25,15 +27,17 @@ export default {
   components: {
     Header,
     WeatherInfo,
+    Popup,
   },
   data() {
     return {
-      circlesData: [
+      enterprisesData: [
         {
           name: "test boiler 1",
           lon: 85.995976,
           lat: 55.350685,
           radius: 0,
+          diameter: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
         {
@@ -41,16 +45,20 @@ export default {
           lon: 86.069663,
           lat: 55.359522,
           radius: 0,
+          diameter: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
       ],
       map: null,
       vectorSource: new VectorSource(),
       windDirection: 0,
+      isPopupVisible: false,
     };
   },
   async mounted() {
     this.initializeMap();
+    this.addMapClickHandler();
+    this.addCursorPointerHandler();
 
     await this.fetchAllCirclesData();
 
@@ -58,6 +66,7 @@ export default {
       await this.fetchAndUpdateData();
     }, 3600000);
 
+    this.drawPoints();
   },
   methods: {
     initializeMap() {
@@ -82,17 +91,18 @@ export default {
     },
     async fetchAndUpdateData() {
       await this.fetchAllCirclesData();
-      this.vectorSource.clear(); 
-      this.drawTriangles(); 
+      this.vectorSource.clear();
+      this.drawTriangles();
+      this.drawPoints();
     },
     async fetchAllCirclesData() {
-      const promises = this.circlesData.map((_, index) =>
+      const promises = this.enterprisesData.map((_, index) =>
         this.fetchMathData(index)
       );
       await Promise.all(promises);
     },
     drawCircles() {
-      this.circlesData.forEach((circle) => {
+      this.enterprisesData.forEach((circle) => {
         const steps = 16;
         const stepRadius = circle.radius / steps;
 
@@ -133,7 +143,7 @@ export default {
       });
     },
     drawTriangles() {
-      this.circlesData.forEach((circle) => {
+      this.enterprisesData.forEach((circle) => {
         const baseRadius = circle.radius * 2;
         const heightRadius = circle.radius * 3;
         const center = fromLonLat([circle.lon, circle.lat]);
@@ -199,6 +209,7 @@ export default {
       this.vectorSource.clear();
       this.windDirection = newDirection;
       this.drawTriangles();
+      this.drawPoints();
       //this.drawCircles();
     },
     async fetchMathData(index) {
@@ -211,29 +222,32 @@ export default {
         const maxElement = Math.max(...data.sp);
         const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
 
-        this.circlesData[index].radius = maxConcentrationDistance;
+        this.enterprisesData[index].radius = maxConcentrationDistance;
 
         this.saveMathData({
-            name: this.circlesData[index].name,
-            sp: data.sp,
-            so2: data.so2,
-            no: data.no,
-            no2: data.no2,
-            co2: data.co2,
-          });
+          name: this.enterprisesData[index].name,
+          sp: data.sp,
+          so2: data.so2,
+          no: data.no,
+          no2: data.no2,
+          co2: data.co2,
+        });
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
     },
     async saveMathData(weatherData) {
       try {
-        const response = await fetch("http://127.0.0.1:8000/save_math_boiler/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(weatherData),
-        });
+        const response = await fetch(
+          "http://127.0.0.1:8000/save_math_boiler/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(weatherData),
+          }
+        );
         const result = await response.json();
         console.log("Результат сохранения данных:", result);
       } catch (error) {
@@ -257,6 +271,86 @@ export default {
       let g = parseInt(hex.slice(3, 5), 16);
       let b = parseInt(hex.slice(5, 7), 16);
       return `${r}, ${g}, ${b}`;
+    },
+    drawPoints() {
+      this.enterprisesData.forEach((circle) => {
+        this.addPointWithPopup(
+          circle.lon,
+          circle.lat,
+          circle.radius / 3.5,
+          circle
+        );
+      });
+    },
+    addMapClickHandler() {
+      this.map.on("click", (event) => {
+        let clickedOnFeature = false;
+
+        this.map.forEachFeatureAtPixel(event.pixel, (feature) => {
+          const featureInfo = feature.get("info");
+          if (featureInfo) {
+            clickedOnFeature = true;
+
+            const popupInfo = `
+              <div class="popup-row">
+                <span>Name: ${featureInfo.name}</span>
+              </div>
+              <div class="popup-row">
+                <span>Radius: ${featureInfo.radius}</span>
+              </div>
+              <div class="popup-row">
+                <span>Pipe diameter: ${featureInfo.diameter}</span>
+              </div>
+              `;
+
+            const popupElement = document.getElementById("popup");
+            if (popupElement) {
+              popupElement.innerHTML = popupInfo;
+            }
+
+            this.isPopupVisible = true;
+
+            this.$nextTick(() => {
+              const popupElement = document.getElementById("popup");
+              if (popupElement) {
+                popupElement.innerHTML = popupInfo;
+              }
+            });
+          }
+        });
+        if (!clickedOnFeature) {
+          this.isPopupVisible = false;
+        }
+      });
+    },
+    addPointWithPopup(lon, lat, radius, info) {
+      const pointFeature = new Feature({
+        geometry: new CircleGeom(fromLonLat([lon, lat]), radius),
+      });
+
+      pointFeature.setProperties({
+        info: info,
+      });
+
+      const pointStyle = new Style({
+        fill: new Fill({
+          color: "rgba(72, 84, 198, .8)",
+        }),
+      });
+      pointFeature.setStyle(pointStyle);
+      this.vectorSource.addFeature(pointFeature);
+    },
+    addCursorPointerHandler() {
+      this.map.on("pointermove", (event) => {
+        const pixel = this.map.getEventPixel(event.originalEvent);
+        const hit = this.map.hasFeatureAtPixel(pixel);
+
+        if (hit) {
+          this.map.getTargetElement().style.cursor = "pointer";
+        } else {
+          this.map.getTargetElement().style.cursor = "";
+        }
+      });
     },
   },
 };
