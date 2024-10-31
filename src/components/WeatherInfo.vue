@@ -56,11 +56,11 @@ export default {
             weatherElement.innerHTML = weatherInfo;
           }
 
-          this.saveWeatherData({
+          /*this.saveWeatherData({
             temperature: data.temperature,
             wind_speed: data.wind_speed,
             wind_direction: data.wind_direction,
-          });
+          });*/
         })
         .catch((error) => console.error("Error weather request", error));
     },

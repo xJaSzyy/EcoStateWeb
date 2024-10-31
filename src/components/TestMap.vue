@@ -33,19 +33,23 @@ export default {
     return {
       enterprisesData: [
         {
-          name: "test boiler 1",
+          name: "Азот",
           lon: 85.995976,
           lat: 55.350685,
-          radius: 0,
-          diameter: 0,
+          radius: 500,
+          diameter: 7,
+          dangerZoneLength: 0,
+          dangerZoneHalfWidth: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
         {
           name: "test boiler 2",
           lon: 86.069663,
           lat: 55.359522,
-          radius: 0,
-          diameter: 0,
+          radius: 750,
+          diameter: 3,
+          dangerZoneLength: 0,
+          dangerZoneHalfWidth: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
       ],
@@ -210,28 +214,27 @@ export default {
       this.windDirection = newDirection;
       this.drawTriangles();
       this.drawPoints();
+      this.drawEllipse();
       //this.drawCircles();
     },
     async fetchMathData(index) {
       try {
         const response = await fetch(
-          "https://localhost:7017/api/concentration/random"
+          "https://localhost:7017/api/concentration/random/sp"
         );
         const data = await response.json();
 
-        const maxElement = Math.max(...data.sp);
-        const maxConcentrationDistance = data.sp.indexOf(maxElement) * 5;
+        this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
+        this.enterprisesData[index].dangerZoneHalfWidth = data.dangerZoneHalfWidth;
 
-        this.enterprisesData[index].radius = maxConcentrationDistance;
-
-        this.saveMathData({
+        /*this.saveMathData({
           name: this.enterprisesData[index].name,
           sp: data.sp,
           so2: data.so2,
           no: data.no,
           no2: data.no2,
           co2: data.co2,
-        });
+        });*/
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
@@ -296,9 +299,6 @@ export default {
                 <span>Name: ${featureInfo.name}</span>
               </div>
               <div class="popup-row">
-                <span>Radius: ${featureInfo.radius}</span>
-              </div>
-              <div class="popup-row">
                 <span>Pipe diameter: ${featureInfo.diameter}</span>
               </div>
               `;
@@ -350,6 +350,48 @@ export default {
         } else {
           this.map.getTargetElement().style.cursor = "";
         }
+      });
+    },
+    drawEllipse() {
+      this.enterprisesData.forEach((circle) => {
+        const coeff = 0.8; // коэффицент регулирующий ширину
+        const semiMajor = circle.dangerZoneLength; // Длина по направлению ветра
+        const semiMinor = circle.dangerZoneHalfWidth * 2 * coeff; // Ширина
+
+      // Центр (примерные координаты)
+      const center = fromLonLat([circle.lon, circle.lat]);
+
+      // Угол поворота в радианах
+      const angle = 0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
+
+      const points = [];
+
+      // Сдвиг в метрах вдоль направления ветра
+      const offsetX = (semiMajor / 1.25) * Math.cos(angle);
+      const offsetY = (semiMajor / 1.25) * Math.sin(angle);
+
+      // Изменяем центр с учетом смещения
+      const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
+
+      // Генерируем точки эллипса
+      for (let i = 0; i < 360; i += 10) {
+        const theta = (i * Math.PI) / 180;
+        const x = semiMajor * Math.cos(theta);
+        const y = semiMinor * Math.sin(theta);
+
+        const rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
+        const rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
+
+        // Добавляем точки с учетом смещенного центра
+        points.push([shiftedCenter[0] + rotatedX, shiftedCenter[1] + rotatedY]);
+      }
+
+      // Создаем полигон из точек эллипса
+      const ellipse = new Feature({
+        geometry: new Polygon([points]),
+      });
+
+      this.vectorSource.addFeature(ellipse);
       });
     },
   },
