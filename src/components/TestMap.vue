@@ -21,6 +21,7 @@ import Feature from "ol/Feature";
 import { fromLonLat } from "ol/proj";
 import { Style, Fill } from "ol/style";
 import { Polygon } from "ol/geom";
+import { API_BASE_URL } from "../api/config";
 
 export default {
   name: "MapComponent",
@@ -219,13 +220,11 @@ export default {
     },
     async fetchMathData(index) {
       try {
-        const response = await fetch(
-          "https://localhost:7017/api/concentration/random/sp"
-        );
+        const response = await fetch(API_BASE_URL + "/concentration-rnd");
         const data = await response.json();
 
-        this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneHalfWidth = data.dangerZoneHalfWidth;
+        this.enterprisesData[index].dangerZoneLength = data.content.dangerZoneLength;
+        this.enterprisesData[index].dangerZoneHalfWidth = data.content.dangerZoneHalfWidth;
 
         /*this.saveMathData({
           name: this.enterprisesData[index].name,
@@ -354,7 +353,7 @@ export default {
     },
     drawEllipse() {
       this.enterprisesData.forEach((circle) => {
-        const coeff = 0.8; // коэффицент регулирующий ширину
+        const coeff = 0.65; // коэффицент регулирующий ширину
         const semiMajor = circle.dangerZoneLength; // Длина по направлению ветра
         const semiMinor = circle.dangerZoneHalfWidth * 2 * coeff; // Ширина
 

@@ -4,6 +4,7 @@
 
 <script>
 import arrowIcon from "../assets/arrow.png";
+import { API_BASE_URL } from "../api/config";
 
 export default {
   name: "WeatherInfo",
@@ -32,24 +33,24 @@ export default {
   },
   methods: {
     async fetchWeatherData() {
-      fetch("http://127.0.0.1:8000/weather?city=Kemerovo")
+      fetch(API_BASE_URL + "/currentWeather-get?city=Kemerovo")
         .then((response) => response.json())
         .then((data) => {
           const weatherInfo = `
           <div class="weather-row">
-            <span>${data.temperature}°C</span>
-            <img src="https://openweathermap.org/img/wn/${data.icon}@2x.png" style="width: 48px; height: 48px;">
+            <span>${data.content.temperature}°C</span>
+            <img src="${data.content.iconUrl}" style="width: 48px; height: 48px;">
           </div>
           <div class="weather-row">
-            <span>${data.wind_speed} м/с</span>
-            <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.wind_direction}deg)">
+            <span>${data.content.windSpeed} м/с</span>
+            <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.content.windDirection}deg)">
           </div>
           <div class="weather-time">
             ${this.currentTime}
           </div>
           `;
 
-          this.windDirection = data.wind_direction;
+          this.windDirection = data.content.windDirection;
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {
