@@ -38,19 +38,19 @@ export default {
         .then((data) => {
           const weatherInfo = `
           <div class="weather-row">
-            <span>${data.content.temperature}°C</span>
-            <img src="${data.content.iconUrl}" style="width: 48px; height: 48px;">
+            <span>${data.temperature}°C</span>
+            <img src="${data.iconUrl}" style="width: 48px; height: 48px;">
           </div>
           <div class="weather-row">
-            <span>${data.content.windSpeed} м/с</span>
-            <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.content.windDirection}deg)">
+            <span>${data.windSpeed} м/с</span>
+            <img src="${this.arrowIcon}" style="width: 24px; height: 24px; transform: rotate(${data.windDirection}deg)">
           </div>
           <div class="weather-time">
             ${this.currentTime}
           </div>
           `;
 
-          this.windDirection = data.content.windDirection;
+          this.windDirection = data.windDirection;
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {

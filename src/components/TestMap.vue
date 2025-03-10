@@ -223,8 +223,8 @@ export default {
         const response = await fetch(API_BASE_URL + "/concentration-rnd");
         const data = await response.json();
 
-        this.enterprisesData[index].dangerZoneLength = data.content.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneHalfWidth = data.content.dangerZoneHalfWidth;
+        this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
+        this.enterprisesData[index].dangerZoneHalfWidth = data.dangerZoneHalfWidth;
 
         /*this.saveMathData({
           name: this.enterprisesData[index].name,
