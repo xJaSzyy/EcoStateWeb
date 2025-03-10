@@ -40,7 +40,7 @@ export default {
           radius: 500,
           diameter: 7,
           dangerZoneLength: 0,
-          dangerZoneHalfWidth: 0,
+          dangerZoneWidth: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
         {
@@ -50,7 +50,7 @@ export default {
           radius: 750,
           diameter: 3,
           dangerZoneLength: 0,
-          dangerZoneHalfWidth: 0,
+          dangerZoneWidth: 0,
           gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
         },
       ],
@@ -97,7 +97,6 @@ export default {
     async fetchAndUpdateData() {
       await this.fetchAllCirclesData();
       this.vectorSource.clear();
-      this.drawTriangles();
       this.drawPoints();
     },
     async fetchAllCirclesData() {
@@ -213,7 +212,7 @@ export default {
     updateWindDirection(newDirection) {
       this.vectorSource.clear();
       this.windDirection = newDirection;
-      this.drawTriangles();
+      //this.drawTriangles();
       this.drawPoints();
       this.drawEllipse();
       //this.drawCircles();
@@ -224,7 +223,7 @@ export default {
         const data = await response.json();
 
         this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneHalfWidth = data.dangerZoneHalfWidth;
+        this.enterprisesData[index].dangerZoneWidth = data.dangerZoneWidth;
 
         /*this.saveMathData({
           name: this.enterprisesData[index].name,
@@ -355,7 +354,7 @@ export default {
       this.enterprisesData.forEach((circle) => {
         const coeff = 0.65; // коэффицент регулирующий ширину
         const semiMajor = circle.dangerZoneLength; // Длина по направлению ветра
-        const semiMinor = circle.dangerZoneHalfWidth * 2 * coeff; // Ширина
+        const semiMinor = circle.dangerZoneWidth * 2 * coeff; // Ширина
 
       // Центр (примерные координаты)
       const center = fromLonLat([circle.lon, circle.lat]);
