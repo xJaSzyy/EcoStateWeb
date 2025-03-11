@@ -1,6 +1,6 @@
 <template>
   <Header :showButtons="false" :isTransparent="true" />
-  <WeatherInfo @windDirectionChanged="updateWindDirection" />
+  <WeatherInfo @weatherDataUpdated="updateWeatherData" />
   <Popup v-if="isPopupVisible" />
   <div id="map" class="map"></div>
 </template>
@@ -36,6 +36,8 @@ export default {
       map: null,
       vectorSource: new VectorSource(),
       windDirection: 0,
+      windSpeed: 0,
+      airTemp: 0,
       isPopupVisible: false,
     };
   },
@@ -44,13 +46,13 @@ export default {
     this.addMapClickHandler();
     this.addCursorPointerHandler();
 
-    await this.fetchAllCirclesData();
+    //await this.fetchAllCirclesData();
 
-    setInterval(async () => {
+    /*setInterval(async () => {
       await this.fetchAndUpdateData();
-    }, 3600000);
+    }, 3600000);*/
 
-    this.drawPoints();
+    //this.drawPoints();
   },
   methods: {
     initializeMap() {
@@ -74,7 +76,7 @@ export default {
       this.map.addLayer(vectorLayer);
     },
     async fetchAndUpdateData() {
-      await this.fetchAllCirclesData();
+      //await this.fetchAllCirclesData();
       this.vectorSource.clear();
       this.drawPoints();
       this.drawEllipse();
@@ -89,19 +91,54 @@ export default {
       );
       await Promise.all(promises);
     },
-    updateWindDirection(newDirection) {
+    async updateWeatherData(data) {
       this.vectorSource.clear();
-      this.windDirection = newDirection;
+      this.windSpeed = data.windSpeed;
+      this.airTemp = data.airTemp;
+      this.windDirection = data.windDirection;
+
+      await this.fetchAllCirclesData();
+
       this.drawPoints();
       this.drawEllipse();
+
+      const date = new Date().toLocaleString();
+      console.log(`Weather data updated on ${date}:`, data);
     },
     async fetchMathData(index) {
       try {
-        const response = await fetch(API_BASE_URL + "/concentration-rnd");
-        const data = await response.json();
+        if (this.windSpeed == 0) {
+          this.windSpeed = 1;
+        }
 
-        this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneWidth = data.dangerZoneWidth;
+        const params = new URLSearchParams({
+          EjectedTemp: this.enterprisesData[index].ejectedTemp,
+          AirTemp: this.airTemp,
+          AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
+          HeightSource: this.enterprisesData[index].heightSource,
+          DiameterSource: this.enterprisesData[index].diameterSource,
+          TempStratificationRatio:
+            this.enterprisesData[index].tempStratificationRatio,
+          SedimentationRateRatio:
+            this.enterprisesData[index].sedimentationRateRatio,
+          WindSpeed: this.windSpeed,
+          concentration: 5,
+        });
+
+        const response = await fetch(
+          API_BASE_URL + "/concentraion-calc?" + params.toString(),
+          {
+            method: "GET",
+            headers: {
+              Accept: "*/*",
+            },
+          }
+        );
+
+        const result = await response.json();
+
+        this.enterprisesData[index].dangerZoneLength = result.dangerZoneLength;
+        this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
@@ -126,12 +163,7 @@ export default {
     },
     drawPoints() {
       this.enterprisesData.forEach((circle) => {
-        this.addPointWithPopup(
-          circle.lon,
-          circle.lat,
-          150,
-          circle
-        );
+        this.addPointWithPopup(circle.lon, circle.lat, 150, circle);
       });
     },
     addMapClickHandler() {
