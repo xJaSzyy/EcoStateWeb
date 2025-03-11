@@ -32,28 +32,7 @@ export default {
   },
   data() {
     return {
-      enterprisesData: [
-        {
-          name: "Азот",
-          lon: 85.995976,
-          lat: 55.350685,
-          radius: 500,
-          diameter: 7,
-          dangerZoneLength: 0,
-          dangerZoneHalfWidth: 0,
-          gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
-        },
-        {
-          name: "test boiler 2",
-          lon: 86.069663,
-          lat: 55.359522,
-          radius: 750,
-          diameter: 3,
-          dangerZoneLength: 0,
-          dangerZoneHalfWidth: 0,
-          gradientColors: ["#ff0000", "#ffff00", "#00ff00"],
-        },
-      ],
+      enterprisesData: [],
       map: null,
       vectorSource: new VectorSource(),
       windDirection: 0,
@@ -97,126 +76,24 @@ export default {
     async fetchAndUpdateData() {
       await this.fetchAllCirclesData();
       this.vectorSource.clear();
-      this.drawTriangles();
       this.drawPoints();
+      this.drawEllipse();
     },
     async fetchAllCirclesData() {
+      const response = await fetch(API_BASE_URL + "/enterprise-getAll");
+      const data = await response.json();
+      this.enterprisesData = data;
+
       const promises = this.enterprisesData.map((_, index) =>
         this.fetchMathData(index)
       );
       await Promise.all(promises);
     },
-    drawCircles() {
-      this.enterprisesData.forEach((circle) => {
-        const steps = 16;
-        const stepRadius = circle.radius / steps;
-
-        for (let i = 0; i < steps; i++) {
-          let fraction = i / steps;
-          let interpolatedColor;
-
-          if (fraction < 0.5) {
-            interpolatedColor = this.interpolateColor(
-              circle.gradientColors[0],
-              circle.gradientColors[1],
-              fraction * 2
-            );
-          } else {
-            interpolatedColor = this.interpolateColor(
-              circle.gradientColors[1],
-              circle.gradientColors[2],
-              (fraction - 0.5) * 2
-            );
-          }
-
-          const feature = new Feature({
-            geometry: new CircleGeom(
-              fromLonLat([circle.lon, circle.lat]),
-              circle.radius - i * stepRadius
-            ),
-          });
-
-          const circleStyle = new Style({
-            fill: new Fill({
-              color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.2)`,
-            }),
-          });
-
-          feature.setStyle(circleStyle);
-          this.vectorSource.addFeature(feature);
-        }
-      });
-    },
-    drawTriangles() {
-      this.enterprisesData.forEach((circle) => {
-        const baseRadius = circle.radius * 2;
-        const heightRadius = circle.radius * 3;
-        const center = fromLonLat([circle.lon, circle.lat]);
-
-        const windAngleRad =
-          0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
-        const halfBaseAngle = Math.PI / 12;
-
-        const gradientSteps = 12;
-        for (let i = 0; i < gradientSteps; i++) {
-          const fraction = i / gradientSteps;
-          let interpolatedColor;
-
-          if (fraction < 0.5) {
-            interpolatedColor = this.interpolateColor(
-              circle.gradientColors[0],
-              circle.gradientColors[1],
-              fraction * 2
-            );
-          } else {
-            interpolatedColor = this.interpolateColor(
-              circle.gradientColors[1],
-              circle.gradientColors[2],
-              (fraction - 0.5) * 2
-            );
-          }
-
-          const scaledRadius = baseRadius * (1 - fraction);
-          const scaledHeightRadius = heightRadius * (1 - fraction);
-
-          const scaledBaseVertex1 = [
-            center[0] + scaledRadius * Math.cos(windAngleRad - halfBaseAngle),
-            center[1] + scaledRadius * Math.sin(windAngleRad - halfBaseAngle),
-          ];
-          const scaledBaseVertex2 = [
-            center[0] + scaledRadius * Math.cos(windAngleRad + halfBaseAngle),
-            center[1] + scaledRadius * Math.sin(windAngleRad + halfBaseAngle),
-          ];
-
-          const triangleCoordinates = [
-            center,
-            scaledBaseVertex1,
-            scaledBaseVertex2,
-            center,
-          ];
-
-          const triangleFeature = new Feature({
-            geometry: new Polygon([triangleCoordinates]),
-          });
-
-          const triangleStyle = new Style({
-            fill: new Fill({
-              color: `rgba(${this.hexToRgb(interpolatedColor)}, 0.25)`,
-            }),
-          });
-
-          triangleFeature.setStyle(triangleStyle);
-          this.vectorSource.addFeature(triangleFeature);
-        }
-      });
-    },
     updateWindDirection(newDirection) {
       this.vectorSource.clear();
       this.windDirection = newDirection;
-      this.drawTriangles();
       this.drawPoints();
       this.drawEllipse();
-      //this.drawCircles();
     },
     async fetchMathData(index) {
       try {
@@ -224,36 +101,9 @@ export default {
         const data = await response.json();
 
         this.enterprisesData[index].dangerZoneLength = data.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneHalfWidth = data.dangerZoneHalfWidth;
-
-        /*this.saveMathData({
-          name: this.enterprisesData[index].name,
-          sp: data.sp,
-          so2: data.so2,
-          no: data.no,
-          no2: data.no2,
-          co2: data.co2,
-        });*/
+        this.enterprisesData[index].dangerZoneWidth = data.dangerZoneWidth;
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
-      }
-    },
-    async saveMathData(weatherData) {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/save_math_boiler/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(weatherData),
-          }
-        );
-        const result = await response.json();
-        console.log("Результат сохранения данных:", result);
-      } catch (error) {
-        console.error("Ошибка при сохранении данных:", error);
       }
     },
     interpolateColor(color1, color2, factor) {
@@ -279,7 +129,7 @@ export default {
         this.addPointWithPopup(
           circle.lon,
           circle.lat,
-          circle.radius / 3.5,
+          150,
           circle
         );
       });
@@ -298,7 +148,7 @@ export default {
                 <span>Name: ${featureInfo.name}</span>
               </div>
               <div class="popup-row">
-                <span>Pipe diameter: ${featureInfo.diameter}</span>
+                <span>Diameter Source: ${featureInfo.diameterSource}</span>
               </div>
               `;
 
@@ -353,44 +203,47 @@ export default {
     },
     drawEllipse() {
       this.enterprisesData.forEach((circle) => {
-        const coeff = 0.65; // коэффицент регулирующий ширину
         const semiMajor = circle.dangerZoneLength; // Длина по направлению ветра
-        const semiMinor = circle.dangerZoneHalfWidth * 2 * coeff; // Ширина
+        const semiMinor = circle.dangerZoneWidth; // Ширина
 
-      // Центр (примерные координаты)
-      const center = fromLonLat([circle.lon, circle.lat]);
+        // Центр (примерные координаты)
+        const center = fromLonLat([circle.lon, circle.lat]);
 
-      // Угол поворота в радианах
-      const angle = 0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
+        // Угол поворота в радианах
+        const angle = 0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
 
-      const points = [];
+        const points = [];
 
-      // Сдвиг в метрах вдоль направления ветра
-      const offsetX = (semiMajor / 1.25) * Math.cos(angle);
-      const offsetY = (semiMajor / 1.25) * Math.sin(angle);
+        // Сдвиг в метрах вдоль направления ветра
+        const offsetX = (semiMajor / 1.25) * Math.cos(angle);
+        const offsetY = (semiMajor / 1.25) * Math.sin(angle);
 
-      // Изменяем центр с учетом смещения
-      const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
+        // Изменяем центр с учетом смещения
+        const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
 
-      // Генерируем точки эллипса
-      for (let i = 0; i < 360; i += 10) {
-        const theta = (i * Math.PI) / 180;
-        const x = semiMajor * Math.cos(theta);
-        const y = semiMinor * Math.sin(theta);
+        // Генерируем точки эллипса
+        for (let i = 360; i >= 0; i -= 10) {
+          const theta = (i * Math.PI) / 180;
+          const x = semiMajor * Math.cos(theta);
+          const y = semiMinor * Math.sin(theta);
 
-        const rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
-        const rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
+          const rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
+          const rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
 
-        // Добавляем точки с учетом смещенного центра
-        points.push([shiftedCenter[0] + rotatedX, shiftedCenter[1] + rotatedY]);
-      }
+          // Добавляем точки с учетом смещенного центра
+          points.push([
+            shiftedCenter[0] + rotatedX,
+            shiftedCenter[1] + rotatedY,
+          ]);
+        }
+        points.push(points[0]);
 
-      // Создаем полигон из точек эллипса
-      const ellipse = new Feature({
-        geometry: new Polygon([points]),
-      });
+        // Создаем полигон из точек эллипса
+        const ellipse = new Feature({
+          geometry: new Polygon([points]),
+        });
 
-      this.vectorSource.addFeature(ellipse);
+        this.vectorSource.addFeature(ellipse);
       });
     },
   },
