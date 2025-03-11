@@ -12,6 +12,8 @@ export default {
     return {
       arrowIcon: arrowIcon,
       windDirection: 0,
+      windSpeed: 0,
+      airTemp: 0,
       currentTime: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -19,8 +21,14 @@ export default {
     };
   },
   watch: {
+    windSpeed(newVal) {
+      this.emitWeatherData();
+    },
+    airTemp(newVal) {
+      this.emitWeatherData();
+    },
     windDirection(newVal) {
-      this.$emit("windDirectionChanged", newVal);
+      this.emitWeatherData();
     },
   },
   mounted() {
@@ -51,34 +59,26 @@ export default {
           `;
 
           this.windDirection = data.windDirection;
+          this.windSpeed = data.windSpeed;
+          this.airTemp = data.temperature;
+
+          this.$nextTick(() => {
+            this.emitWeatherData();
+          });
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {
             weatherElement.innerHTML = weatherInfo;
           }
-
-          /*this.saveWeatherData({
-            temperature: data.temperature,
-            wind_speed: data.wind_speed,
-            wind_direction: data.wind_direction,
-          });*/
         })
         .catch((error) => console.error("Error weather request", error));
     },
-    async saveWeatherData(weatherData) {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/save_weather/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(weatherData),
-        });
-        const result = await response.json();
-        console.log("Результат сохранения данных:", result);
-      } catch (error) {
-        console.error("Ошибка при сохранении данных:", error);
-      }
+    emitWeatherData() {
+      this.$emit("weatherDataUpdated", {
+        windSpeed: this.windSpeed,
+        airTemp: this.airTemp,
+        windDirection: this.windDirection,
+      });
     },
     updateTime() {
       this.currentTime = new Date().toLocaleTimeString([], {
