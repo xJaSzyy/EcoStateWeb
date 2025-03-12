@@ -1,7 +1,8 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" />
+  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup v-if="isPopupVisible" />
+  <Popup :show="showPopup" :title="popupTitle" :x="popupX" :y="popupY" @close="showPopup = false">
+  <div v-html="popupData"></div></Popup>
   <div id="map" class="map"></div>
 </template>
 
@@ -38,21 +39,24 @@ export default {
       windDirection: 0,
       windSpeed: 0,
       airTemp: 0,
-      isPopupVisible: false,
+      showPopup: false,
+      popupTitle: "",
+      popupData: "",
+      selectedLayer: "smallParticles",
+      concentration: 5,
     };
   },
+  watch: {
+    selectedLayer() {
+      this.updateConcentration(); // Обновляем концентрацию при изменении слоя
+      this.fetchAndUpdateData(); // Перерисовка карты
+    }
+  },
+
   async mounted() {
     this.initializeMap();
     this.addMapClickHandler();
     this.addCursorPointerHandler();
-
-    //await this.fetchAllCirclesData();
-
-    /*setInterval(async () => {
-      await this.fetchAndUpdateData();
-    }, 3600000);*/
-
-    //this.drawPoints();
   },
   methods: {
     initializeMap() {
@@ -75,9 +79,16 @@ export default {
       });
       this.map.addLayer(vectorLayer);
     },
+    updateLayer(newLayer) {
+      this.selectedLayer = newLayer;
+    },
+    updateConcentration() {
+      this.concentration = this.selectedLayer === "smallParticles" ? 5 : 1;
+    },
+
     async fetchAndUpdateData() {
-      //await this.fetchAllCirclesData();
       this.vectorSource.clear();
+      await this.fetchAllCirclesData();
       this.drawPoints();
       this.drawEllipse();
     },
@@ -105,6 +116,7 @@ export default {
       const date = new Date().toLocaleString();
       console.log(`Weather data updated on ${date}:`, data);
     },
+
     async fetchMathData(index) {
       try {
         if (this.windSpeed == 0) {
@@ -122,7 +134,7 @@ export default {
           SedimentationRateRatio:
             this.enterprisesData[index].sedimentationRateRatio,
           WindSpeed: this.windSpeed,
-          concentration: 5,
+          concentration: this.concentration,
         });
 
         const response = await fetch(
@@ -143,24 +155,6 @@ export default {
         console.error("Ошибка при запросе данных:", error);
       }
     },
-    interpolateColor(color1, color2, factor) {
-      const result = color1
-        .slice(1)
-        .match(/.{2}/g)
-        .map((hex, i) => {
-          const c1 = parseInt(hex, 16);
-          const c2 = parseInt(color2.slice(1).match(/.{2}/g)[i], 16);
-          const mix = Math.round(c1 + (c2 - c1) * factor);
-          return mix.toString(16).padStart(2, "0");
-        });
-      return `#${result.join("")}`;
-    },
-    hexToRgb(hex) {
-      let r = parseInt(hex.slice(1, 3), 16);
-      let g = parseInt(hex.slice(3, 5), 16);
-      let b = parseInt(hex.slice(5, 7), 16);
-      return `${r}, ${g}, ${b}`;
-    },
     drawPoints() {
       this.enterprisesData.forEach((circle) => {
         this.addPointWithPopup(circle.lon, circle.lat, 150, circle);
@@ -175,32 +169,24 @@ export default {
           if (featureInfo) {
             clickedOnFeature = true;
 
-            const popupInfo = `
-              <div class="popup-row">
-                <span>Name: ${featureInfo.name}</span>
-              </div>
-              <div class="popup-row">
-                <span>Diameter Source: ${featureInfo.diameterSource}</span>
-              </div>
-              `;
+            const coordinate = event.coordinate;
+            const pixel = this.map.getPixelFromCoordinate(coordinate);
 
-            const popupElement = document.getElementById("popup");
-            if (popupElement) {
-              popupElement.innerHTML = popupInfo;
-            }
+            this.popupTitle = "Информация об объекте";
+            this.popupData = `
+              <div class="popup-row"><span>Название: ${featureInfo.name}</span></div>
+              <div class="popup-row"><span>Диаметр источника: ${featureInfo.diameterSource} м</span></div>
+              <div class="popup-row"><span>Высота источника: ${featureInfo.heightSource} м</span></div>
+            `;
+            
 
-            this.isPopupVisible = true;
-
-            this.$nextTick(() => {
-              const popupElement = document.getElementById("popup");
-              if (popupElement) {
-                popupElement.innerHTML = popupInfo;
-              }
-            });
+            this.popupX = pixel[0];
+            this.popupY = pixel[1];
+            this.showPopup = true;
           }
         });
         if (!clickedOnFeature) {
-          this.isPopupVisible = false;
+          this.showPopup = false;
         }
       });
     },
@@ -270,9 +256,9 @@ export default {
         }
         points.push(points[0]);
 
-        // Создаем полигон из точек эллипса
+        // Создаем объект полигона
         const ellipse = new Feature({
-          geometry: new Polygon([points]),
+        geometry: new Polygon([points]),
         });
 
         this.vectorSource.addFeature(ellipse);

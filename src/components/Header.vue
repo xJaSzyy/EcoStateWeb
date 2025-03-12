@@ -11,6 +11,11 @@ export default {
       default: false
     }
   },
+  data() {
+    return {
+      selectedLayer: "smallParticles"
+    };
+  },
   methods: {
     goToMain() {
       this.$router.push('/');
@@ -20,6 +25,9 @@ export default {
     },
     goToRegistration() {
       this.$router.push('/registration');
+    },
+    updateLayer() {
+      this.$emit("layerChanged", this.selectedLayer); // Отправляем выбранный слой вверх
     }
   }
 }
@@ -44,13 +52,16 @@ export default {
         <button @click="goToRegistration()">Регистрация</button> 
     </div>
     <div class="tools" v-if="!showButtons">
-      <select name="layer" id="layer-select">
-        <option value="">Выберите слой</option>
-        <option value="layer1">Layer 1</option>
-        <option value="layer2">Layer 2</option>
-        <option value="layer3">Layer 3</option>
-        <option value="layer4">Layer 4</option>
-      </select>
+      <div class="radio-group">
+        <label>
+          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer"/>
+          Мелкие частицы
+        </label>
+        <label>
+          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer"/>
+          Другие частицы
+        </label>
+      </div>
       <button>Инструмент1</button>
       <button>Инструмент2</button>
     </div>
@@ -107,6 +118,22 @@ header .buttons button:hover {
 
 header .buttons button:last-child {
   margin-right: 0; 
+}
+
+.radio-group {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+label {
+  display: block;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+input[type="radio"] {
+  margin-right: 8px;
 }
 
 .logo_img {
