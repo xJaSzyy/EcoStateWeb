@@ -105,32 +105,39 @@ export default {
   top: 20%;
   right: 20px;
   transform: translateY(-50%);
-
-  background-color: rgba(212, 212, 212, 0.8);
-  padding: 8px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 128px;
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  width: 110px;
   font-family: Arial, sans-serif;
-
   display: flex;
   flex-direction: column;
-  gap: 0px;
+  gap: 4px;
   z-index: 1000;
+  text-align: center;
 }
 
 .weather-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0px;
-  margin: 0px 12px;
+  gap: 4px;
 }
 
 .weather-time {
-  margin-top: 16px;
-  margin-right: 12px;
-  margin-left: 10px;
-  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 6px;
+}
+
+.weather-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.wind-icon {
+  width: 16px;
+  height: 16px;
 }
 </style>
