@@ -1,21 +1,36 @@
 <template>
   <div id="popup" v-if="show" :style="{ top: y + 'px', left: x + 'px' }">
     <h3>{{ title }}</h3>
+
     <div class="popup-content">
-      <slot></slot>
+      <div v-if="featureInfo">
+        <div class="popup-row"><b>Название:</b> {{ featureInfo.name }}</div>
+        <div class="popup-row"><b>Диаметр источника:</b> {{ featureInfo.diameterSource }} м</div>
+        <div class="popup-row"><b>Высота источника:</b> {{ featureInfo.heightSource }} м</div>
+      </div>
+
+      <div v-if="chartData">
+        <LineChart :data="chartData" />
+      </div>
     </div>
+
     <button class="close-btn" @click="$emit('close')">Закрыть</button>
   </div>
 </template>
 
 <script>
+import LineChart from "@/components/LineChart.vue";
+
 export default {
   name: "Popup",
+  components: { LineChart },
   props: {
     show: Boolean,
     title: String,
     x: Number,
-    y: Number
+    y: Number,
+    featureInfo: Object, 
+    chartData: Object 
   }
 };
 </script>
@@ -32,8 +47,13 @@ export default {
   flex-direction: column;
   gap: 10px;
   z-index: 1000;
-  text-align: center;
-  transform: translate(-50%, -100%); /* Чтобы окно не закрывало точку */
+  text-align: left;
+  transform: translate(-50%, -100%);
+}
+
+.popup-row {
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 
 .close-btn {

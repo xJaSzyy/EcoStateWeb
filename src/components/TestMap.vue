@@ -1,8 +1,8 @@
 <template>
   <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :title="popupTitle" :x="popupX" :y="popupY" @close="showPopup = false">
-  <div v-html="popupData"></div></Popup>
+  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData" @close="showPopup = false" />
   <div id="map" class="map"></div>
 </template>
 
@@ -45,7 +45,7 @@ export default {
       selectedLayer: "smallParticles",
       concentration: 5,
       popupX: 0,
-      popupY: 0
+      popupY: 0,
     };
   },
   watch: {
@@ -175,22 +175,31 @@ export default {
             const pixel = this.map.getPixelFromCoordinate(coordinate);
 
             this.popupTitle = "Информация об объекте";
-            this.popupData = `
-              <div class="popup-row"><span>Название: ${featureInfo.name}</span></div>
-              <div class="popup-row"><span>Диаметр источника: ${featureInfo.diameterSource} м</span></div>
-              <div class="popup-row"><span>Высота источника: ${featureInfo.heightSource} м</span></div>
-            `;
-            
+            this.popupFeatureInfo = featureInfo; 
+            this.popupChartData = this.generateChartData(featureInfo); 
 
             this.popupX = pixel[0];
             this.popupY = pixel[1];
             this.showPopup = true;
           }
         });
+
         if (!clickedOnFeature) {
           this.showPopup = false;
         }
       });
+    },
+
+    generateChartData(featureInfo) {
+      return {
+        labels: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"],
+        datasets: [{
+          label: `PM2.5 (${featureInfo.name})`,
+          data: [12, 19, 8, 15, 25, 30, 18, 22], // Тестовые данные
+          borderColor: "red",
+          borderWidth: 2
+        }]
+      };
     },
     addPointWithPopup(lon, lat, radius, info) {
       const pointFeature = new Feature({
@@ -260,13 +269,13 @@ export default {
 
         // Создаем объект полигона
         const ellipse = new Feature({
-        geometry: new Polygon([points]),
+          geometry: new Polygon([points]),
         });
 
         ellipse.setStyle(
           new Style({
             fill: new Fill({
-              color: "rgba(171, 209, 98, 0.2)", 
+              color: "rgba(171, 209, 98, 0.2)",
             })
           })
         );
