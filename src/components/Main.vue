@@ -20,7 +20,7 @@ export default {
 </script>
 
 <template>
-  <Header />
+  <Header :showButtons="true" :isTransparent="false"/>
 
   <div class="wrapper">
     <svg
