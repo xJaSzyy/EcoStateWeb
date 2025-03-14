@@ -102,21 +102,21 @@ export default {
 <style>
 #weather-info {
   position: absolute;
-  top: 20%;
-  right: 20px;
-  transform: translateY(-50%);
+  top: 108px; 
+  right: 24px;
   background-color: #ffffff;
   padding: 12px;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  width: 110px;
+  width: 120px;
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  z-index: 1000;
-  text-align: center;
+  gap: 6px;
+  z-index: 999;
+  text-align: left;
 }
+
 
 .weather-row {
   display: flex;
@@ -126,9 +126,9 @@ export default {
 }
 
 .weather-time {
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 16px;
   margin-top: 6px;
+  margin-left: 2px;
 }
 
 .weather-icon {
@@ -141,3 +141,5 @@ export default {
   height: 16px;
 }
 </style>
+
+

@@ -263,37 +263,13 @@ export default {
         geometry: new Polygon([points]),
         });
 
-        // Создаем canvas для градиента
-        const gradientCanvas = document.createElement("canvas");
-        const ctx = gradientCanvas.getContext("2d");
-
-        gradientCanvas.width = semiMajor * 2;
-        gradientCanvas.height = semiMinor * 2;
-
-        const gradient = ctx.createRadialGradient(
-          semiMajor, semiMinor, 10, // Центр градиента
-          semiMajor, semiMinor, semiMajor // Радиус эллипса
-        );
-
-        gradient.addColorStop(0, "rgba(255, 0, 0, 0.8)"); // Красный центр
-        gradient.addColorStop(1, "rgba(255, 255, 0, 0.2)"); // Желтый край
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, gradientCanvas.width, gradientCanvas.height);
-
-        // Устанавливаем стиль для эллипса
-        const pattern = ctx.createPattern(gradientCanvas, "no-repeat");
-
-        if (pattern) {
-          ellipse.setStyle(
-            new Style({
-              fill: new Fill({
-                color: pattern,
-              }),
+        ellipse.setStyle(
+          new Style({
+            fill: new Fill({
+              color: "rgba(171, 209, 98, 0.2)", 
             })
-          );
-        }
-
+          })
+        );
         this.vectorSource.addFeature(ellipse);
       });
     },
