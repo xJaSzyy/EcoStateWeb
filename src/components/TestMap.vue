@@ -46,6 +46,8 @@ export default {
       concentration: 5,
       popupX: 0,
       popupY: 0,
+      popupFeatureInfo: null,
+      popupChartData: null
     };
   },
   watch: {
@@ -121,10 +123,6 @@ export default {
 
     async fetchMathData(index) {
       try {
-        if (this.windSpeed == 0) {
-          this.windSpeed = 1;
-        }
-
         const params = new URLSearchParams({
           EjectedTemp: this.enterprisesData[index].ejectedTemp,
           AirTemp: this.airTemp,
@@ -153,6 +151,7 @@ export default {
 
         this.enterprisesData[index].dangerZoneLength = result.dangerZoneLength;
         this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
+        this.enterprisesData[index].dangerZoneColorHex = result.dangerZoneColorHex;
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
@@ -175,8 +174,8 @@ export default {
             const pixel = this.map.getPixelFromCoordinate(coordinate);
 
             this.popupTitle = "Информация об объекте";
-            this.popupFeatureInfo = featureInfo; 
-            this.popupChartData = this.generateChartData(featureInfo); 
+            this.popupFeatureInfo = featureInfo;
+            this.popupChartData = this.generateChartData(featureInfo);
 
             this.popupX = pixel[0];
             this.popupY = pixel[1];
@@ -272,15 +271,33 @@ export default {
           geometry: new Polygon([points]),
         });
 
+        const color = this.hexToRgbA(circle.dangerZoneColorHex);
+        console.log(color);
+        console.log(circle.dangerZoneColorHex);
+
         ellipse.setStyle(
           new Style({
             fill: new Fill({
-              color: "rgba(171, 209, 98, 0.2)",
+              color: color,
             })
           })
         );
         this.vectorSource.addFeature(ellipse);
       });
+    },
+    hexToRgbA(hex) {
+      var c;
+      if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split("");
+        if (c.length == 3) {
+          c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+        }
+        c = "0x" + c.join("");
+        return (
+          "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + ", 0.8)"
+        );
+      }
+      throw new Error("Bad Hex");
     },
   },
 };
