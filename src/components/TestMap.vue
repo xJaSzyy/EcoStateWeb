@@ -47,14 +47,14 @@ export default {
       popupX: 0,
       popupY: 0,
       popupFeatureInfo: null,
-      popupChartData: null
+      popupChartData: null,
     };
   },
   watch: {
     selectedLayer() {
       this.updateConcentration(); // Обновляем концентрацию при изменении слоя
       this.fetchAndUpdateData(); // Перерисовка карты
-    }
+    },
   },
 
   async mounted() {
@@ -118,7 +118,6 @@ export default {
       this.drawEllipse();
 
       const date = new Date().toLocaleString();
-      console.log(`Weather data updated on ${date}:`, data);
     },
 
     async fetchMathData(index) {
@@ -151,7 +150,8 @@ export default {
 
         this.enterprisesData[index].dangerZoneLength = result.dangerZoneLength;
         this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
-        this.enterprisesData[index].dangerZoneColorHex = result.dangerZoneColorHex;
+        this.enterprisesData[index].dangerZoneColorHex =
+          result.dangerZoneColorHex;
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
@@ -188,16 +188,26 @@ export default {
         }
       });
     },
-
     generateChartData(featureInfo) {
       return {
-        labels: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"],
-        datasets: [{
-          label: `PM2.5 (${featureInfo.name})`,
-          data: [12, 19, 8, 15, 25, 30, 18, 22], // Тестовые данные
-          borderColor: "red",
-          borderWidth: 2
-        }]
+        labels: [
+          "00:00",
+          "03:00",
+          "06:00",
+          "09:00",
+          "12:00",
+          "15:00",
+          "18:00",
+          "21:00",
+        ],
+        datasets: [
+          {
+            label: `PM2.5 (${featureInfo.name})`,
+            data: [12, 19, 8, 15, 25, 30, 18, 22], // Тестовые данные
+            borderColor: "red",
+            borderWidth: 2,
+          },
+        ],
       };
     },
     addPointWithPopup(lon, lat, radius, info) {
@@ -266,20 +276,17 @@ export default {
         }
         points.push(points[0]);
 
-        // Создаем объект полигона
         const ellipse = new Feature({
           geometry: new Polygon([points]),
         });
 
-        const color = this.hexToRgbA(circle.dangerZoneColorHex);
-        console.log(color);
-        console.log(circle.dangerZoneColorHex);
+        const colorRgba = this.hexToRgbA(circle.dangerZoneColorHex);
 
         ellipse.setStyle(
           new Style({
             fill: new Fill({
-              color: color,
-            })
+              color: colorRgba,
+            }),
           })
         );
         this.vectorSource.addFeature(ellipse);
@@ -294,7 +301,9 @@ export default {
         }
         c = "0x" + c.join("");
         return (
-          "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + ", 0.8)"
+          "rgba(" +
+          [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") +
+          ", 0.8)"
         );
       }
       throw new Error("Bad Hex");

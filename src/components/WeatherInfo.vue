@@ -20,17 +20,6 @@ export default {
       }),
     };
   },
-  watch: {
-    windSpeed(newVal) {
-      this.emitWeatherData();
-    },
-    airTemp(newVal) {
-      this.emitWeatherData();
-    },
-    windDirection(newVal) {
-      this.emitWeatherData();
-    },
-  },
   mounted() {
     this.fetchWeatherData();
     this.updateTime();
@@ -61,10 +50,7 @@ export default {
           this.windDirection = data.windDirection;
           this.windSpeed = data.windSpeed;
           this.airTemp = data.temperature;
-
-          this.$nextTick(() => {
-            this.emitWeatherData();
-          });
+          this.emitWeatherData();
 
           const weatherElement = document.getElementById("weather-info");
           if (weatherElement) {
