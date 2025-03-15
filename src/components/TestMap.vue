@@ -1,8 +1,19 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
+  <Header
+    :showButtons="false"
+    :isTransparent="true"
+    @layerChanged="updateLayer"
+  />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData" @close="showPopup = false" />
+  <Popup
+    :show="showPopup"
+    :x="popupX"
+    :y="popupY"
+    :title="popupTitle"
+    :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData"
+    @close="showPopup = false"
+  />
   <div id="map" class="map"></div>
 </template>
 
@@ -43,7 +54,6 @@ export default {
       popupTitle: "",
       popupData: "",
       selectedLayer: "smallParticles",
-      concentration: 5,
       popupX: 0,
       popupY: 0,
       popupFeatureInfo: null,
@@ -52,8 +62,7 @@ export default {
   },
   watch: {
     selectedLayer() {
-      this.updateConcentration(); // Обновляем концентрацию при изменении слоя
-      this.fetchAndUpdateData(); // Перерисовка карты
+      this.fetchAndUpdateData(); 
     },
   },
 
@@ -86,10 +95,6 @@ export default {
     updateLayer(newLayer) {
       this.selectedLayer = newLayer;
     },
-    updateConcentration() {
-      this.concentration = this.selectedLayer === "smallParticles" ? 5 : 1;
-    },
-
     async fetchAndUpdateData() {
       this.vectorSource.clear();
       await this.fetchAllCirclesData();
@@ -122,36 +127,67 @@ export default {
 
     async fetchMathData(index) {
       try {
-        const params = new URLSearchParams({
-          EjectedTemp: this.enterprisesData[index].ejectedTemp,
-          AirTemp: this.airTemp,
-          AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
-          HeightSource: this.enterprisesData[index].heightSource,
-          DiameterSource: this.enterprisesData[index].diameterSource,
-          TempStratificationRatio:
-            this.enterprisesData[index].tempStratificationRatio,
-          SedimentationRateRatio:
-            this.enterprisesData[index].sedimentationRateRatio,
-          WindSpeed: this.windSpeed,
-          concentration: this.concentration,
-        });
+        if (this.selectedLayer === "smallParticles") {
+          const params = new URLSearchParams({
+            EjectedTemp: this.enterprisesData[index].ejectedTemp,
+            AirTemp: this.airTemp,
+            AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
+            HeightSource: this.enterprisesData[index].heightSource,
+            DiameterSource: this.enterprisesData[index].diameterSource,
+            TempStratificationRatio:
+              this.enterprisesData[index].tempStratificationRatio,
+            SedimentationRateRatio:
+              this.enterprisesData[index].sedimentationRateRatio,
+            WindSpeed: this.windSpeed,
+            concentration: 5,
+          });
 
-        const response = await fetch(
-          API_BASE_URL + "/concentraion-calc?" + params.toString(),
-          {
-            method: "GET",
-            headers: {
-              Accept: "*/*",
-            },
-          }
-        );
+          const response = await fetch(
+            API_BASE_URL + "/concentraion-calc?" + params.toString(),
+            {
+              method: "GET",
+              headers: {
+                Accept: "*/*",
+              },
+            }
+          );
 
-        const result = await response.json();
+          const result = await response.json();
 
-        this.enterprisesData[index].dangerZoneLength = result.dangerZoneLength;
-        this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
-        this.enterprisesData[index].dangerZoneColorHex =
-          result.dangerZoneColorHex;
+          this.enterprisesData[index].dangerZoneLength =
+            result.dangerZoneLength;
+          this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
+          this.enterprisesData[index].dangerZoneColorHex =
+            result.dangerZoneColorHex;
+          this.enterprisesData[index].dangerZoneAngle = result.dangerZoneAngle;
+        } else {
+          const params = new URLSearchParams({
+            EjectedTemp: this.enterprisesData[index].ejectedTemp,
+            AirTemp: this.airTemp,
+            AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
+            HeightSource: this.enterprisesData[index].heightSource,
+            DiameterSource: this.enterprisesData[index].diameterSource,
+            TempStratificationRatio:
+              this.enterprisesData[index].tempStratificationRatio,
+            SedimentationRateRatio:
+              this.enterprisesData[index].sedimentationRateRatio,
+            WindSpeed: this.windSpeed,
+          });
+
+          const response = await fetch(
+            API_BASE_URL + "/emission-calc?" + params.toString(),
+            {
+              method: "GET",
+              headers: {
+                Accept: "*/*",
+              },
+            }
+          );
+
+          const result = await response.json();
+
+          this.enterprisesData[index].concentrations = result.concentrations;
+        }
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
@@ -221,7 +257,7 @@ export default {
 
       const pointStyle = new Style({
         fill: new Fill({
-          color: "rgba(72, 84, 198, .8)",
+          color: "rgba(72, 84, 198, 0.8)",
         }),
       });
       pointFeature.setStyle(pointStyle);
@@ -240,57 +276,61 @@ export default {
       });
     },
     drawEllipse() {
-      this.enterprisesData.forEach((circle) => {
-        const semiMajor = circle.dangerZoneLength; // Длина по направлению ветра
-        const semiMinor = circle.dangerZoneWidth; // Ширина
-
-        // Центр (примерные координаты)
-        const center = fromLonLat([circle.lon, circle.lat]);
-
-        // Угол поворота в радианах
-        const angle = 0.5 * Math.PI - (this.windDirection * Math.PI) / 180;
-
-        const points = [];
-
-        // Сдвиг в метрах вдоль направления ветра
-        const offsetX = (semiMajor / 1.25) * Math.cos(angle);
-        const offsetY = (semiMajor / 1.25) * Math.sin(angle);
-
-        // Изменяем центр с учетом смещения
-        const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
-
-        // Генерируем точки эллипса
-        for (let i = 360; i >= 0; i -= 10) {
-          const theta = (i * Math.PI) / 180;
-          const x = semiMajor * Math.cos(theta);
-          const y = semiMinor * Math.sin(theta);
-
-          const rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
-          const rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
-
-          // Добавляем точки с учетом смещенного центра
-          points.push([
-            shiftedCenter[0] + rotatedX,
-            shiftedCenter[1] + rotatedY,
-          ]);
-        }
-        points.push(points[0]);
-
-        const ellipse = new Feature({
-          geometry: new Polygon([points]),
+      if (this.selectedLayer === "smallParticles") {
+        this.enterprisesData.forEach((circle) => {
+          this.drawCircle(circle, circle);
         });
+      } else {
+        this.enterprisesData.forEach((circle) => {
+          circle.concentrations.forEach((concentration) => {
+            this.drawCircle(concentration, circle);
+          });
+        });
+      }
+    },
+    drawCircle(circle, other) {
+      const semiMajor = circle.dangerZoneLength; 
+      const semiMinor = circle.dangerZoneWidth; 
 
-        const colorRgba = this.hexToRgbA(circle.dangerZoneColorHex);
+      const center = fromLonLat([other.lon, other.lat]);
 
-        ellipse.setStyle(
-          new Style({
-            fill: new Fill({
-              color: colorRgba,
-            }),
-          })
-        );
-        this.vectorSource.addFeature(ellipse);
+      const angle =
+        0.5 * Math.PI -
+        ((this.windDirection + circle.dangerZoneAngle) * Math.PI) / 180;
+
+      const points = [];
+
+      const offsetX = (semiMajor / 1.25) * Math.cos(angle);
+      const offsetY = (semiMajor / 1.25) * Math.sin(angle);
+
+      const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
+
+      for (let i = 360; i >= 0; i -= 15) {
+        const theta = (i * Math.PI) / 180;
+        const x = semiMajor * Math.cos(theta);
+        const y = semiMinor * Math.sin(theta);
+
+        const rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
+        const rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
+
+        points.push([shiftedCenter[0] + rotatedX, shiftedCenter[1] + rotatedY]);
+      }
+      points.push(points[0]);
+
+      const ellipse = new Feature({
+        geometry: new Polygon([points]),
       });
+
+      const colorRgba = this.hexToRgbA(circle.dangerZoneColorHex);
+
+      ellipse.setStyle(
+        new Style({
+          fill: new Fill({
+            color: colorRgba,
+          }),
+        })
+      );
+      this.vectorSource.addFeature(ellipse);
     },
     hexToRgbA(hex) {
       var c;
