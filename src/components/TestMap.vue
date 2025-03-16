@@ -1,20 +1,23 @@
 <template>
-  <Header
-    :showButtons="false"
-    :isTransparent="true"
-    @layerChanged="updateLayer"
-  />
+  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup
-    :show="showPopup"
-    :x="popupX"
-    :y="popupY"
-    :title="popupTitle"
-    :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData"
-    @close="showPopup = false"
-  />
+  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData" @close="showPopup = false" />
   <div id="map" class="map"></div>
+  <div class="tools" v-if="!showButtons">
+    <teleport to="body">
+      <div class="radio-group">
+        <label>
+          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
+          Мелкие частицы
+        </label>
+        <label>
+          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
+          Другие частицы
+        </label>
+      </div>
+    </teleport>
+  </div>
 </template>
 
 <script>
@@ -58,11 +61,12 @@ export default {
       popupY: 0,
       popupFeatureInfo: null,
       popupChartData: null,
+      showRadio: false,
     };
   },
   watch: {
     selectedLayer() {
-      this.fetchAndUpdateData(); 
+      this.fetchAndUpdateData();
     },
   },
 
@@ -92,9 +96,10 @@ export default {
       });
       this.map.addLayer(vectorLayer);
     },
-    updateLayer(newLayer) {
-      this.selectedLayer = newLayer;
+    updateLayer() {
+      this.$emit("layerChanged", this.selectedLayer); // Отправляем выбранный слой вверх
     },
+
     async fetchAndUpdateData() {
       this.vectorSource.clear();
       await this.fetchAllCirclesData();
@@ -289,8 +294,8 @@ export default {
       }
     },
     drawCircle(circle, other) {
-      const semiMajor = circle.dangerZoneLength; 
-      const semiMinor = circle.dangerZoneWidth; 
+      const semiMajor = circle.dangerZoneLength;
+      const semiMinor = circle.dangerZoneWidth;
 
       const center = fromLonLat([other.lon, other.lat]);
 
@@ -356,5 +361,27 @@ export default {
 #map {
   width: 100%;
   height: 100vh;
+}
+
+.radio-group {
+  position: fixed;
+  top: 109px;
+  right: 24px;
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  width: max-content;
+  z-index: 1000;
+}
+
+label {
+  display: block;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+input[type="radio"] {
+  margin-right: 8px;
 }
 </style>

@@ -11,7 +11,7 @@ import Registration from './components/Registration.vue';
 import Map from './components/TestMap.vue';
 
 const routes = [
-    { path: '/', component: Main },
+    { path: '/', component: Map },
     { path: '/login', component: Login },
     { path: '/registration', component: Registration },
     { path: '/map', component: Map }
