@@ -62,6 +62,7 @@ export default {
       popupFeatureInfo: null,
       popupChartData: null,
       showRadio: false,
+      showButtons: false,
     };
   },
   watch: {

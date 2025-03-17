@@ -15,6 +15,7 @@
 
 <script>
 import logoImage from "@/assets/LogoBlue.png";
+import "@/assets/main.css";
 
 export default {
   name: "Header",
@@ -65,7 +66,9 @@ export default {
 .nav-btn {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 20px; 
+  font-weight: 600; 
+  font-family: 'Montserrat', sans-serif; 
   color: #007bff;
   cursor: pointer;
   position: relative;
@@ -79,8 +82,8 @@ export default {
   bottom: -16px;
   left: 50%;
   transform: translateX(-50%);
-  width: 62px; /* Исходная ширина */
-  height: 96px; /* Высота хедера */
+  width: 62px;
+  height: 96px; 
   background-color: transparent;
   transition: background-color 0.3s, width 0.3s;
   z-index: -1;
@@ -92,7 +95,6 @@ export default {
 
 .nav-btn:hover::before {
   background-color: rgba(75, 169, 255, 1);
-  width: 100px; /* Увеличенная ширина */
+  width: 180px; 
 }
-
 </style>
