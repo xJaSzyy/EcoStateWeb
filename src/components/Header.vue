@@ -1,14 +1,14 @@
 <template>
   <header class="header">
     <div class="logo" @click="goToMain">
-      <svg class="logo_img" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <image :href="logoImage" width="64" height="64" />
+      <svg class="logo_img" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <image :href="logoImage" width="48" height="48" />
       </svg>
       <span>EcoState</span>
     </div>
     <nav class="nav">
-      <button class="nav-btn">О нас</button>
-      <button class="nav-btn">Вход</button>
+      <button class="nav-btn" v-on:click="goToAbout">О нас</button>
+      <button class="nav-btn" v-on:click="goToLogin">Вход</button>
     </nav>
   </header>
 </template>
@@ -27,6 +27,15 @@ export default {
   methods: {
     goToMain() {
       this.$router.push("/");
+    },
+    goToLogin() {
+      this.$router.push("/login");
+    },
+    goToRegister() {
+      this.$router.push("/registration");
+    },
+    goToAbout() {
+      this.$router.push("/about");
     }
   }
 };
@@ -37,11 +46,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 64px;
+  padding-left: 24px;
   background-color: white;
-  border-top: 4px solid #333;
-  height: 80px;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15); /* Усиленная тень */
+  height: 64px;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .logo {
@@ -51,39 +59,43 @@ export default {
 }
 
 .logo span {
-  color: #007bff;
-  font-size: 24px;
-  font-weight: bold;
+  color: #4BA9FF;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: 'Montserrat', sans-serif; 
+  font-style: normal;
   margin-left: 16px;
 }
 
 .nav {
   display: flex;
-  gap: 124px;
   position: relative;
 }
 
 .nav-btn {
   background: none;
   border: none;
-  font-size: 20px; 
-  font-weight: 600; 
+  font-size: 20px;
+  font-weight: 400;
   font-family: 'Montserrat', sans-serif; 
-  color: #007bff;
+  font-style: normal;
+  color: #4BA9FF;
+  width: 192px;
+  height: 64px;
   cursor: pointer;
   position: relative;
-  padding: 32px 0;
   transition: color 0.3s;
 }
 
 .nav-btn::before {
   content: "";
   position: absolute;
-  bottom: -16px;
   left: 50%;
+  top: 0px;
+  bottom: 0px;
   transform: translateX(-50%);
-  width: 62px;
-  height: 96px; 
+  width: 16px;
+  height: 64px;
   background-color: transparent;
   transition: background-color 0.3s, width 0.3s;
   z-index: -1;
@@ -95,6 +107,7 @@ export default {
 
 .nav-btn:hover::before {
   background-color: rgba(75, 169, 255, 1);
-  width: 180px; 
+  width: 100%;
+  height: 100%;
 }
 </style>
