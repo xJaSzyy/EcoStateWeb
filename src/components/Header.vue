@@ -97,7 +97,7 @@ export default {
   width: 16px;
   height: 64px;
   background-color: transparent;
-  transition: background-color 0.3s, width 0.3s;
+  transition: background-color 0s, width 0s;
   z-index: -1;
 }
 

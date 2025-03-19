@@ -98,7 +98,7 @@ export default {
       this.map.addLayer(vectorLayer);
     },
     updateLayer() {
-      this.$emit("layerChanged", this.selectedLayer); // Отправляем выбранный слой вверх
+      this.$emit("layerChanged", this.selectedLayer); 
     },
 
     async fetchAndUpdateData() {
