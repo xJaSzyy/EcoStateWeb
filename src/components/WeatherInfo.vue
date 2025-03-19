@@ -30,7 +30,7 @@ export default {
   },
   methods: {
     async fetchWeatherData() {
-      fetch(API_BASE_URL + "/currentWeather-get?city=Kemerovo")
+      fetch(API_BASE_URL + "/weather/current?city=Kemerovo")
         .then((response) => response.json())
         .then((data) => {
           const weatherInfo = `

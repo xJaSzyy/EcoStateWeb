@@ -108,7 +108,7 @@ export default {
       this.drawEllipse();
     },
     async fetchAllCirclesData() {
-      const response = await fetch(API_BASE_URL + "/enterprise-getAll");
+      const response = await fetch(API_BASE_URL + "/enterprise");
       const data = await response.json();
       this.enterprisesData = data;
 
@@ -149,7 +149,7 @@ export default {
           });
 
           const response = await fetch(
-            API_BASE_URL + "/concentraion-calc?" + params.toString(),
+            API_BASE_URL + "/concentration/calculate?" + params.toString(),
             {
               method: "GET",
               headers: {
@@ -181,7 +181,7 @@ export default {
           });
 
           const response = await fetch(
-            API_BASE_URL + "/emission-calc?" + params.toString(),
+            API_BASE_URL + "/emission/calculate?" + params.toString(),
             {
               method: "GET",
               headers: {
