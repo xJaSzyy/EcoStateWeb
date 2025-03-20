@@ -1,169 +1,113 @@
+<template>
+  <header class="header">
+    <div class="logo" @click="goToMain">
+      <svg class="logo_img" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <image :href="logoImage" width="48" height="48" />
+      </svg>
+      <span>EcoState</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn" v-on:click="goToAbout">О нас</button>
+      <button class="nav-btn" v-on:click="goToLogin">Вход</button>
+    </nav>
+  </header>
+</template>
+
 <script>
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/LogoBlue.png";
+import "@/assets/main.css";
 
 export default {
-  name: 'Header',
-  props: {
-    showButtons: {
-      type: Boolean,
-      default: true
-    },
-    isTransparent: {
-      type: Boolean,
-      default: false
-    }
-  },
+  name: "Header",
   data() {
     return {
-      selectedLayer: "smallParticles",
-      showRadio: false,
       logoImage
     };
   },
   methods: {
     goToMain() {
-      this.$router.push('/');
+      this.$router.push("/");
     },
     goToLogin() {
-      this.$router.push('/login');
+      this.$router.push("/login");
     },
-    goToRegistration() {
-      this.$router.push('/registration');
+    goToRegister() {
+      this.$router.push("/registration");
     },
-    updateLayer() {
-      this.$emit("layerChanged", this.selectedLayer); // Отправляем выбранный слой вверх
-    },
+    goToAbout() {
+      this.$router.push("/about");
+    }
   }
-}
+};
 </script>
 
-<template>
-  <header :class="{ transparent: isTransparent }">
-    <a @click="goToMain" class="logo">
-      <svg class="logo_img" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <image :href="logoImage" width="64" height="64" />
-      </svg>
-      <span>EcoState</span>
-    </a>
-    <div class="tools" v-if="!showButtons">
-      <teleport to="body">
-        <div class="radio-group">
-          <label>
-            <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
-            Мелкие частицы
-          </label>
-          <label>
-            <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
-            Другие частицы
-          </label>
-        </div>
-      </teleport>
-    </div>
-  </header>
-</template>
-
 <style>
-header,
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 24px;
+  background-color: white;
+  height: 64px;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 .logo {
   display: flex;
   align-items: center;
-  padding: 10px;
-}
-
-header.transparent {
-  background-color: transparent;
-}
-
-header .logo {
   cursor: pointer;
-  text-decoration: none;
+}
+
+.logo span {
+  color: #4BA9FF;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: 'Montserrat', sans-serif; 
+  font-style: normal;
+  margin-left: 16px;
+}
+
+.nav {
   display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-
-header .logo span {
-  color: #76A34F;
-  font-size: 32px;
-  display: inline-block;
-  vertical-align: middle;
-  font-family: 'MS PGothic';
-}
-
-header .buttons,
-.tools {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: auto;
-  margin-right: 8px;
-}
-
-header .buttons button {
-  background-color: white;
-  border-radius: 100px;
-  height: 36px;
-  padding: 8px 16px;
-  font-size: 16px;
-  margin-right: 16px;
-  cursor: pointer;
-  border: 2px solid black;
-  font-weight: bolder;
-}
-
-header .buttons button:hover {
-  border-color: #76A34F;
-  color: #76A34F;
-}
-
-header .buttons button:last-child {
-  margin-right: 0;
-}
-
-.layer-toggle {
   position: relative;
-  width: 50px;
-  height: 50px;
 }
 
-.toggle-button {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+.nav-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: 400;
+  font-family: 'Montserrat', sans-serif; 
+  font-style: normal;
+  color: #4BA9FF;
+  width: 192px;
+  height: 64px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  transition: color 0.3s;
 }
 
-.radio-group {
-  position: fixed;
-  top: 24px; 
-  right: 24px; 
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  width: max-content;
-  z-index: 1000; 
+.nav-btn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0px;
+  bottom: 0px;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 64px;
+  background-color: transparent;
+  transition: background-color 0s, width 0s;
+  z-index: -1;
 }
 
-
-
-label {
-  display: block;
-  padding: 5px 10px;
-  cursor: pointer;
+.nav-btn:hover {
+  color: white;
 }
 
-input[type="radio"] {
-  margin-right: 8px;
-}
-
-.icon-style {
-  width: 24px;
-  height: 24px;
+.nav-btn:hover::before {
+  background-color: rgba(75, 169, 255, 1);
+  width: 100%;
+  height: 100%;
 }
 </style>

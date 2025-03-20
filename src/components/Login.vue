@@ -1,12 +1,17 @@
 <script>
-import Header from './Header.vue';
+import Header from "./Header.vue";
 
 export default {
-    name: 'Login',
-    components: {
-        Header
-    }
-}
+  name: "Login",
+  components: {
+    Header,
+  },
+  methods: {
+    goToRegister() {
+      this.$router.push("/register");
+    },
+  },
+};
 </script>
 
 <template>
@@ -30,7 +35,9 @@ export default {
         <button type="submit" class="submit-button">Зарегистрироваться</button>
       </form>
 
-      <p class="registration-link">Еще нет аккаунта? <a @click.prevent="goToRegistration">Регистрация</a></p>
+      <p class="registration-link">
+        Еще нет аккаунта? <a @click.prevent="goToRegister">Регистрация</a>
+      </p>
     </div>
   </div>
 </template>
@@ -43,7 +50,7 @@ export default {
   justify-content: center;
   min-height: 100vh;
   background-color: #f0f4f7;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 .form-container {
@@ -85,7 +92,7 @@ export default {
 
 .input-group input:focus {
   outline: none;
-  border-color: #76A34F;
+  border-color: #76a34f;
   background-color: white;
 }
 
@@ -94,7 +101,7 @@ export default {
   padding: 12px;
   font-size: 16px;
   color: white;
-  background-color: #76A34F;
+  background-color: #76a34f;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -112,11 +119,15 @@ export default {
 }
 
 .registration-link a {
-  color: #76A34F;
+  color: #76a34f;
   text-decoration: none;
 }
 
 .registration-link a:hover {
   text-decoration: underline;
+}
+
+a {
+  cursor: pointer;
 }
 </style>
