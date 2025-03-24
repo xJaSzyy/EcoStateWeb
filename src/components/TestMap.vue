@@ -1,18 +1,39 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
+  <Header
+    :showButtons="false"
+    :isTransparent="true"
+    @layerChanged="updateLayer"
+  />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData" @close="showPopup = false" />
+  <Popup
+    :show="showPopup"
+    :x="popupX"
+    :y="popupY"
+    :title="popupTitle"
+    :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData"
+    @close="showPopup = false"
+  />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
       <div class="radio-group">
         <label>
-          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="smallParticles"
+            @change="updateLayer"
+          />
           Мелкие частицы
         </label>
         <label>
-          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="otherParticles"
+            @change="updateLayer"
+          />
           Другие частицы
         </label>
       </div>
@@ -37,6 +58,8 @@ import { fromLonLat } from "ol/proj";
 import { Style, Fill } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
+import GeoJSON from "ol/format/GeoJSON";
+import { fromExtent } from "ol/geom/Polygon";
 
 export default {
   name: "MapComponent",
@@ -70,14 +93,13 @@ export default {
       this.fetchAndUpdateData();
     },
   },
-
   async mounted() {
-    this.initializeMap();
+    await this.initializeMap();
     this.addMapClickHandler();
     this.addCursorPointerHandler();
   },
   methods: {
-    initializeMap() {
+    async initializeMap() {
       this.map = new Map({
         target: "map",
         layers: [
@@ -96,11 +118,63 @@ export default {
         source: this.vectorSource,
       });
       this.map.addLayer(vectorLayer);
+      this.fetchGeo();
     },
     updateLayer() {
-      this.$emit("layerChanged", this.selectedLayer); 
+      this.$emit("layerChanged", this.selectedLayer);
     },
+    fetchGeo() {
+      fetch("Кемерово.geojson")
+        .then((response) => response.json())
+        .then((data) => {
+          const features = new GeoJSON().readFeatures(data, {
+            dataProjection: "EPSG:4326",
+            featureProjection: "EPSG:3857",
+          });
 
+          this.vectorSource.addFeatures(features);
+
+          const cityPolygon = features[0];
+
+          this.drawTileGrid(cityPolygon, this.vectorSource, 1500);
+
+          const extent = this.vectorSource.getExtent();
+          this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+        })
+        .catch((error) => console.error("Ошибка загрузки GeoJSON:", error));
+    },
+    drawTileGrid(polygonFeature, vectorSource, tileSize = 1500) {
+      const polygon = polygonFeature.getGeometry();
+      const extent = polygon.getExtent();
+
+      for (let x = extent[0]; x < extent[2]; x += tileSize) {
+        for (let y = extent[1]; y < extent[3]; y += tileSize) {
+          const tileExtent = [x, y, x + tileSize, y + tileSize];
+
+          if (polygon.intersectsExtent(tileExtent)) {
+            const tileFeature = new Feature({
+              geometry: fromExtent(tileExtent),
+            });
+
+            tileFeature.setStyle(
+              new Style({
+                fill: new Fill({
+                  color: this.getRandomColorWithAlpha(0.5),
+                }),
+              })
+            );
+
+            vectorSource.addFeature(tileFeature);
+          }
+        }
+      }
+    },
+    getRandomColorWithAlpha(alpha = 0.5) {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    },
     async fetchAndUpdateData() {
       this.vectorSource.clear();
       await this.fetchAllCirclesData();
@@ -127,8 +201,6 @@ export default {
 
       this.drawPoints();
       this.drawEllipse();
-
-      const date = new Date().toLocaleString();
     },
 
     async fetchMathData(index) {
@@ -311,7 +383,7 @@ export default {
 
       const shiftedCenter = [center[0] + offsetX, center[1] + offsetY];
 
-      for (let i = 360; i >= 0; i -= 15) {
+      for (let i = 360; i >= 0; i -= 5) {
         const theta = (i * Math.PI) / 180;
         const x = semiMajor * Math.cos(theta);
         const y = semiMinor * Math.sin(theta);
