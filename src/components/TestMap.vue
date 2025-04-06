@@ -58,7 +58,6 @@ import { fromLonLat } from "ol/proj";
 import { Style, Fill } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
-import { toRaw } from "vue";
 
 export default {
   name: "MapComponent",
@@ -150,31 +149,26 @@ export default {
       this.drawPoints();
       this.drawEllipse();
     },
-    async fetchMathData(index) {
+    async fetchMathData(enterpriseIndex) {
       try {
+        const promises = [];
         if (this.selectedLayer === "smallParticles") {
-          const promises = [];
-
-          this.enterprisesData.forEach((enterprise, enterpriseIndex) => {
-            enterprise.emissionSources.forEach((_, sourceIndex) => {
+          this.enterprisesData[enterpriseIndex].emissionSources.forEach(
+            (_, sourceIndex) => {
               promises.push(
                 this.fetchConcentrationCalculate(enterpriseIndex, sourceIndex)
               );
-            });
-          });
-
+            }
+          );
           await Promise.all(promises);
         } else {
-          const promises = [];
-
-          this.enterprisesData.forEach((enterprise, enterpriseIndex) => {
-            enterprise.emissionSources.forEach((_, sourceIndex) => {
+          this.enterprisesData[enterpriseIndex].emissionSources.forEach(
+            (_, sourceIndex) => {
               promises.push(
                 this.fetchEmissionCalculate(enterpriseIndex, sourceIndex)
               );
-            });
-          });
-
+            }
+          );
           await Promise.all(promises);
         }
       } catch (error) {
@@ -356,7 +350,6 @@ export default {
         this.enterprisesData.forEach((enterprise) => {
           enterprise.emissionSources.forEach((source) => {
             source.concentrations.forEach((concentration) => {
-              console.log(concentration);
               this.drawCircle(concentration, source);
             });
           });
