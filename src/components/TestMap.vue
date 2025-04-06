@@ -1,18 +1,39 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
+  <Header
+    :showButtons="false"
+    :isTransparent="true"
+    @layerChanged="updateLayer"
+  />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData" @close="showPopup = false" />
+  <Popup
+    :show="showPopup"
+    :x="popupX"
+    :y="popupY"
+    :title="popupTitle"
+    :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData"
+    @close="showPopup = false"
+  />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
       <div class="radio-group">
         <label>
-          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="smallParticles"
+            @change="updateLayer"
+          />
           Мелкие частицы
         </label>
         <label>
-          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="otherParticles"
+            @change="updateLayer"
+          />
           Другие частицы
         </label>
       </div>
@@ -37,6 +58,7 @@ import { fromLonLat } from "ol/proj";
 import { Style, Fill } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
+import { toRaw } from "vue";
 
 export default {
   name: "MapComponent",
@@ -98,7 +120,7 @@ export default {
       this.map.addLayer(vectorLayer);
     },
     updateLayer() {
-      this.$emit("layerChanged", this.selectedLayer); 
+      this.$emit("layerChanged", this.selectedLayer);
     },
 
     async fetchAndUpdateData() {
@@ -127,45 +149,21 @@ export default {
 
       this.drawPoints();
       this.drawEllipse();
-
-      const date = new Date().toLocaleString();
     },
-
     async fetchMathData(index) {
       try {
         if (this.selectedLayer === "smallParticles") {
-          const params = new URLSearchParams({
-            EjectedTemp: this.enterprisesData[index].ejectedTemp,
-            AirTemp: this.airTemp,
-            AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
-            HeightSource: this.enterprisesData[index].heightSource,
-            DiameterSource: this.enterprisesData[index].diameterSource,
-            TempStratificationRatio:
-              this.enterprisesData[index].tempStratificationRatio,
-            SedimentationRateRatio:
-              this.enterprisesData[index].sedimentationRateRatio,
-            WindSpeed: this.windSpeed,
-            concentration: 5,
+          const promises = [];
+
+          this.enterprisesData.forEach((enterprise, enterpriseIndex) => {
+            enterprise.emissionSources.forEach((_, sourceIndex) => {
+              promises.push(
+                this.fetchConcentrationCalculate(enterpriseIndex, sourceIndex)
+              );
+            });
           });
 
-          const response = await fetch(
-            API_BASE_URL + "/concentration/calculate?" + params.toString(),
-            {
-              method: "GET",
-              headers: {
-                Accept: "*/*",
-              },
-            }
-          );
-
-          const result = await response.json();
-
-          this.enterprisesData[index].dangerZoneLength =
-            result.dangerZoneLength;
-          this.enterprisesData[index].dangerZoneWidth = result.dangerZoneWidth;
-          this.enterprisesData[index].dangerZoneColorHex =
-            result.dangerZoneColorHex;
-          this.enterprisesData[index].dangerZoneAngle = result.dangerZoneAngle;
+          await Promise.all(promises);
         } else {
           const params = new URLSearchParams({
             EjectedTemp: this.enterprisesData[index].ejectedTemp,
@@ -197,6 +195,49 @@ export default {
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
       }
+    },
+    async fetchConcentrationCalculate(enterpriseIndex, sourceIndex) {
+      const enterprise = this.enterprisesData[enterpriseIndex];
+      const params = new URLSearchParams({
+        EjectedTemp: enterprise.emissionSources[sourceIndex].ejectedTemp,
+        AirTemp: this.airTemp,
+        AvgExitSpeed: enterprise.emissionSources[sourceIndex].avgExitSpeed,
+        HeightSource: enterprise.emissionSources[sourceIndex].heightSource,
+        DiameterSource: enterprise.emissionSources[sourceIndex].diameterSource,
+        TempStratificationRatio: enterprise.tempStratificationRatio,
+        SedimentationRateRatio: enterprise.sedimentationRateRatio,
+        WindSpeed: this.windSpeed,
+        EmissionSourceId: enterprise.emissionSources[sourceIndex].id,
+        concentration: 5,
+      });
+
+      const response = await fetch(
+        API_BASE_URL + "/concentration/calculate?" + params.toString(),
+        {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneLength = result.dangerZoneLength;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneWidth = result.dangerZoneWidth;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneColorHex = result.dangerZoneColorHex;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneAngle = result.dangerZoneAngle;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].lastConcentration = result.averageConcentration;
     },
     drawPoints() {
       this.enterprisesData.forEach((circle) => {
@@ -283,8 +324,10 @@ export default {
     },
     drawEllipse() {
       if (this.selectedLayer === "smallParticles") {
-        this.enterprisesData.forEach((circle) => {
-          this.drawCircle(circle, circle);
+        this.enterprisesData.forEach((enterprise) => {
+          enterprise.emissionSources.forEach((source) => {
+            this.drawCircle(source);
+          });
         });
       } else {
         this.enterprisesData.forEach((circle) => {
@@ -294,15 +337,15 @@ export default {
         });
       }
     },
-    drawCircle(circle, other) {
-      const semiMajor = circle.dangerZoneLength;
-      const semiMinor = circle.dangerZoneWidth;
+    drawCircle(source) {
+      const semiMajor = source.dangerZoneLength;
+      const semiMinor = source.dangerZoneWidth;
 
-      const center = fromLonLat([other.lon, other.lat]);
+      const center = fromLonLat([source.lon, source.lat]);
 
       const angle =
         0.5 * Math.PI -
-        ((this.windDirection + circle.dangerZoneAngle) * Math.PI) / 180;
+        ((this.windDirection + source.dangerZoneAngle) * Math.PI) / 180;
 
       const points = [];
 
@@ -327,7 +370,7 @@ export default {
         geometry: new Polygon([points]),
       });
 
-      const colorRgba = this.hexToRgbA(circle.dangerZoneColorHex);
+      const colorRgba = this.hexToRgbA(source.dangerZoneColorHex);
 
       ellipse.setStyle(
         new Style({
