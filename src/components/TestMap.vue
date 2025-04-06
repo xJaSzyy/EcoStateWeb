@@ -257,8 +257,12 @@ export default {
       ].concentrations = result.concentrations;
     },
     drawPoints() {
-      this.enterprisesData.forEach((circle) => {
-        this.addPointWithPopup(circle.lon, circle.lat, 150, circle);
+      this.enterprisesData.forEach((enterprise) => {
+        enterprise.emissionSources.forEach(
+            (source) => {
+              this.addPointWithPopup(enterprise, source, 200);
+            }
+          );
       });
     },
     addMapClickHandler() {
@@ -310,13 +314,15 @@ export default {
         ],
       };
     },
-    addPointWithPopup(lon, lat, radius, info) {
+    addPointWithPopup(enterprise, source, radius) {
       const pointFeature = new Feature({
-        geometry: new CircleGeom(fromLonLat([lon, lat]), radius),
+        geometry: new CircleGeom(fromLonLat([source.lon, source.lat]), radius),
       });
 
+      const info = source;
+      info.name = enterprise.name;
       pointFeature.setProperties({
-        info: info,
+        info: source,
       });
 
       const pointStyle = new Style({
