@@ -165,32 +165,17 @@ export default {
 
           await Promise.all(promises);
         } else {
-          const params = new URLSearchParams({
-            EjectedTemp: this.enterprisesData[index].ejectedTemp,
-            AirTemp: this.airTemp,
-            AvgExitSpeed: this.enterprisesData[index].avgExitSpeed,
-            HeightSource: this.enterprisesData[index].heightSource,
-            DiameterSource: this.enterprisesData[index].diameterSource,
-            TempStratificationRatio:
-              this.enterprisesData[index].tempStratificationRatio,
-            SedimentationRateRatio:
-              this.enterprisesData[index].sedimentationRateRatio,
-            WindSpeed: this.windSpeed,
+          const promises = [];
+
+          this.enterprisesData.forEach((enterprise, enterpriseIndex) => {
+            enterprise.emissionSources.forEach((_, sourceIndex) => {
+              promises.push(
+                this.fetchEmissionCalculate(enterpriseIndex, sourceIndex)
+              );
+            });
           });
 
-          const response = await fetch(
-            API_BASE_URL + "/emission/calculate?" + params.toString(),
-            {
-              method: "GET",
-              headers: {
-                Accept: "*/*",
-              },
-            }
-          );
-
-          const result = await response.json();
-
-          this.enterprisesData[index].concentrations = result.concentrations;
+          await Promise.all(promises);
         }
       } catch (error) {
         console.error("Ошибка при запросе данных:", error);
@@ -238,6 +223,44 @@ export default {
       this.enterprisesData[enterpriseIndex].emissionSources[
         sourceIndex
       ].lastConcentration = result.averageConcentration;
+    },
+    async fetchEmissionCalculate(enterpriseIndex, sourceIndex) {
+      const params = new URLSearchParams({
+        EjectedTemp:
+          this.enterprisesData[enterpriseIndex].emissionSources[sourceIndex]
+            .ejectedTemp,
+        AirTemp: this.airTemp,
+        AvgExitSpeed:
+          this.enterprisesData[enterpriseIndex].emissionSources[sourceIndex]
+            .avgExitSpeed,
+        HeightSource:
+          this.enterprisesData[enterpriseIndex].emissionSources[sourceIndex]
+            .heightSource,
+        DiameterSource:
+          this.enterprisesData[enterpriseIndex].emissionSources[sourceIndex]
+            .diameterSource,
+        TempStratificationRatio:
+          this.enterprisesData[enterpriseIndex].tempStratificationRatio,
+        SedimentationRateRatio:
+          this.enterprisesData[enterpriseIndex].sedimentationRateRatio,
+        WindSpeed: this.windSpeed,
+      });
+
+      const response = await fetch(
+        API_BASE_URL + "/emission/calculate?" + params.toString(),
+        {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].concentrations = result.concentrations;
     },
     drawPoints() {
       this.enterprisesData.forEach((circle) => {
@@ -326,22 +349,25 @@ export default {
       if (this.selectedLayer === "smallParticles") {
         this.enterprisesData.forEach((enterprise) => {
           enterprise.emissionSources.forEach((source) => {
-            this.drawCircle(source);
+            this.drawCircle(source, source);
           });
         });
       } else {
-        this.enterprisesData.forEach((circle) => {
-          circle.concentrations.forEach((concentration) => {
-            this.drawCircle(concentration, circle);
+        this.enterprisesData.forEach((enterprise) => {
+          enterprise.emissionSources.forEach((source) => {
+            source.concentrations.forEach((concentration) => {
+              console.log(concentration);
+              this.drawCircle(concentration, source);
+            });
           });
         });
       }
     },
-    drawCircle(source) {
+    drawCircle(source, coords) {
       const semiMajor = source.dangerZoneLength;
       const semiMinor = source.dangerZoneWidth;
 
-      const center = fromLonLat([source.lon, source.lat]);
+      const center = fromLonLat([coords.lon, coords.lat]);
 
       const angle =
         0.5 * Math.PI -
