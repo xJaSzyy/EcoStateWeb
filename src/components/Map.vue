@@ -4,6 +4,7 @@
     :isTransparent="true"
     @layerChanged="updateLayer"
   />
+  <EnterpriseRating />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
   <Popup
     :show="showPopup"
@@ -45,6 +46,7 @@
 import Header from "./Header.vue";
 import WeatherInfo from "./WeatherInfo.vue";
 import Popup from "./Popup.vue";
+import EnterpriseRating from "./EnterpriseRating.vue";
 
 import "ol/ol.css";
 import { Map, View } from "ol";
@@ -65,6 +67,7 @@ export default {
     Header,
     WeatherInfo,
     Popup,
+    EnterpriseRating,
   },
   data() {
     return {
@@ -91,7 +94,6 @@ export default {
       this.fetchAndUpdateData();
     },
   },
-
   async mounted() {
     this.initializeMap();
     this.addMapClickHandler();
@@ -121,7 +123,6 @@ export default {
     updateLayer() {
       this.$emit("layerChanged", this.selectedLayer);
     },
-
     async fetchAndUpdateData() {
       this.vectorSource.clear();
       await this.fetchAllCirclesData();
@@ -434,7 +435,7 @@ export default {
 
 .radio-group {
   position: fixed;
-  top: 109px;
+  top: 88px;
   right: 24px;
   background: white;
   border-radius: 12px;

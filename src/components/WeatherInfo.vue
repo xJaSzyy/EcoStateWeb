@@ -30,7 +30,7 @@ export default {
   },
   methods: {
     async fetchWeatherData() {
-      fetch(API_BASE_URL + "/weather/current?city=Kemerovo")
+      fetch(`${API_BASE_URL}/weather/current?city=Kemerovo`)
         .then((response) => response.json())
         .then((data) => {
           const weatherInfo = `
@@ -88,7 +88,7 @@ export default {
 <style>
 #weather-info {
   position: absolute;
-  top: 192px; 
+  top: 184px; 
   right: 24px;
   background-color: #ffffff;
   padding: 12px;
@@ -102,7 +102,6 @@ export default {
   z-index: 999;
   text-align: left;
 }
-
 
 .weather-row {
   display: flex;
