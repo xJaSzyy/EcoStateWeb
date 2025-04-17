@@ -60,6 +60,9 @@ import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
 import GeoJSON from "ol/format/GeoJSON";
 import { fromExtent } from "ol/geom/Polygon";
+import { getCenter } from "ol/extent";
+import Point from "ol/geom/Point";
+import Text from "ol/style/Text";
 
 export default {
   name: "MapComponent",
@@ -136,7 +139,17 @@ export default {
         "Рудничный",
         "Центральный",
       ];
-      const colors = {};
+
+      const a = 0.6;
+      const colors = {
+        Заводский: `rgba(164, 125, 184, ${a})`,
+        Кировский: `rgba(248, 212, 97, ${a})`,
+        Ленинский: `rgba(251, 153, 86, ${a})`,
+        Рудничный: `rgba(171, 209, 98, ${a})`,
+        Центральный: `rgba(246, 104, 106, ${a})`,
+      };
+
+      //const colors = {};
 
       const promises = districts.map((name) => {
         return fetch(`${name}.geojson`)
@@ -149,13 +162,14 @@ export default {
 
             const districtFeature = features[0];
 
-            colors[name] = this.getRandomColorWithAlpha(0.5);
+            //colors[name] = this.getRandomColorWithAlpha(0.5);
 
             this.drawTileGrid(
               districtFeature,
               this.tileGridSource,
               1500,
-              colors[name]
+              colors[name],
+              name
             );
             this.vectorSource.addFeatures(features);
           })
@@ -173,7 +187,8 @@ export default {
       polygonFeature,
       vectorSource,
       tileSize = 1500,
-      fillColor = "rgba(0, 0, 255, 0.3)"
+      fillColor = "rgba(0, 0, 255, 0.3)",
+      regionName = ""
     ) {
       const polygon = polygonFeature.getGeometry();
       const extent = polygon.getExtent();
@@ -201,6 +216,24 @@ export default {
             vectorSource.addFeature(tileFeature);
           }
         }
+      }
+
+      if (regionName) {
+        const center = getCenter(extent);
+        const labelFeature = new Feature({
+          geometry: new Point(center),
+        });
+        labelFeature.setStyle(
+          new Style({
+            text: new Text({
+              text: regionName,
+              font: "bold 12px sans-serif",
+              fill: new Fill({ color: "#000" }),
+            }),
+          })
+        );
+
+        vectorSource.addFeature(labelFeature);
       }
     },
     getRandomColorWithAlpha(alpha = 0.5) {
