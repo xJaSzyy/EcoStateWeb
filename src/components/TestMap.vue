@@ -73,6 +73,7 @@ export default {
       enterprisesData: [],
       map: null,
       vectorSource: new VectorSource(),
+      tileGridSource: new VectorSource(),
       windDirection: 0,
       windSpeed: 0,
       airTemp: 0,
@@ -117,38 +118,71 @@ export default {
       const vectorLayer = new VectorLayer({
         source: this.vectorSource,
       });
+      const tileLayer = new VectorLayer({
+        source: this.tileGridSource,
+      });
+      this.map.addLayer(tileLayer);
       this.map.addLayer(vectorLayer);
-      this.fetchGeo();
+      this.fetchAllDistricts();
     },
     updateLayer() {
       this.$emit("layerChanged", this.selectedLayer);
     },
-    fetchGeo() {
-      fetch("Кемерово.geojson")
-        .then((response) => response.json())
-        .then((data) => {
-          const features = new GeoJSON().readFeatures(data, {
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:3857",
-          });
+    fetchAllDistricts() {
+      const districts = [
+        "Заводский",
+        "Кировский",
+        "Ленинский",
+        "Рудничный",
+        "Центральный",
+      ];
+      const colors = {};
 
-          this.vectorSource.addFeatures(features);
+      const promises = districts.map((name) => {
+        return fetch(`${name}.geojson`)
+          .then((res) => res.json())
+          .then((data) => {
+            const features = new GeoJSON().readFeatures(data, {
+              dataProjection: "EPSG:4326",
+              featureProjection: "EPSG:3857",
+            });
 
-          const cityPolygon = features[0];
+            const districtFeature = features[0];
 
-          this.drawTileGrid(cityPolygon, this.vectorSource, 1500);
+            colors[name] = this.getRandomColorWithAlpha(0.5);
 
-          const extent = this.vectorSource.getExtent();
-          this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
-        })
-        .catch((error) => console.error("Ошибка загрузки GeoJSON:", error));
+            this.drawTileGrid(
+              districtFeature,
+              this.tileGridSource,
+              1500,
+              colors[name]
+            );
+            this.vectorSource.addFeatures(features);
+          })
+          .catch((error) =>
+            console.error(`Ошибка загрузки ${name}.geojson:`, error)
+          );
+      });
+
+      Promise.all(promises).then(() => {
+        const extent = this.vectorSource.getExtent();
+        this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+      });
     },
-    drawTileGrid(polygonFeature, vectorSource, tileSize = 1500) {
+    drawTileGrid(
+      polygonFeature,
+      vectorSource,
+      tileSize = 1500,
+      fillColor = "rgba(0, 0, 255, 0.3)"
+    ) {
       const polygon = polygonFeature.getGeometry();
       const extent = polygon.getExtent();
 
-      for (let x = extent[0]; x < extent[2]; x += tileSize) {
-        for (let y = extent[1]; y < extent[3]; y += tileSize) {
+      const globalStartX = Math.floor(extent[0] / tileSize) * tileSize;
+      const globalStartY = Math.floor(extent[1] / tileSize) * tileSize;
+
+      for (let x = globalStartX; x < extent[2]; x += tileSize) {
+        for (let y = globalStartY; y < extent[3]; y += tileSize) {
           const tileExtent = [x, y, x + tileSize, y + tileSize];
 
           if (polygon.intersectsExtent(tileExtent)) {
@@ -159,7 +193,7 @@ export default {
             tileFeature.setStyle(
               new Style({
                 fill: new Fill({
-                  color: this.getRandomColorWithAlpha(0.5),
+                  color: fillColor,
                 }),
               })
             );
