@@ -1,51 +1,34 @@
 <template>
-    <div class="enterprise-rating">
-      <h3>Рейтинг предприятий</h3>
-      <label>
-        Сортировать по:
-        <select v-model="sortBy">
-          <option value="place">Месту</option>
-          <option value="name">Названию</option>
-          <option value="city">Городу</option>
-        </select>
-      </label>
-      <ul>
-        <li v-for="enterprise in sortedEnterprises" :key="enterprise.id">
+  <div class="enterprise-rating">
+    <h3>Рейтинг предприятий</h3>
+    <ul>
+      <li v-for="enterprise in enterprises" :key="enterprise.id" class="enterprise-row">
+        <div class="place-name">
           <strong>{{ enterprise.place }}.</strong>
-          {{ enterprise.name }} <br />
-          <span class="city">{{ enterprise.city }}</span>
-        </li>
-      </ul>
-    </div>
-  </template>
-  
+          {{ enterprise.name }}
+        </div>
+        <span class="city">{{ enterprise.city }}</span>
+      </li>
+    </ul>
+  </div>
+</template>
 
-  <script setup>
-  import { ref, onMounted, computed } from "vue";
-  import axios from "axios";
-  import { API_BASE_URL } from "../api/config";
-  
-  const enterprises = ref([]);
-  const sortBy = ref("place"); // выбранный способ сортировки
-  
-  onMounted(async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/enterprise/rating/5`);
-      enterprises.value = response.data;
-    } catch (error) {
-      console.error("Ошибка при загрузке рейтинга предприятий:", error);
-    }
-  });
-  
-  const sortedEnterprises = computed(() => {
-    return [...enterprises.value].sort((a, b) => {
-      const key = sortBy.value;
-      if (key === "place") return a.place - b.place;
-      return a[key].localeCompare(b[key], "ru", { sensitivity: "base" });
-    });
-  });
-  </script>
-  
+<script setup>
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { API_BASE_URL } from "../api/config";
+
+const enterprises = ref([]);
+
+onMounted(async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/enterprise/rating/5`);
+    enterprises.value = response.data;
+  } catch (error) {
+    console.error("Ошибка при загрузке рейтинга предприятий:", error);
+  }
+});
+</script>
 
 <style scoped>
 .enterprise-rating {
@@ -77,11 +60,24 @@
   margin: 0;
 }
 
-.enterprise-rating li {
-  margin-bottom: 8px;
+.enterprise-rating .enterprise-row {
+  display: flex;
+  flex-direction: column;
+  /* Сделаем вертикальное расположение элементов */
+  gap: 4px;
   line-height: 1.4;
   border-bottom: 1px solid #eee;
   padding-bottom: 6px;
+}
+
+.enterprise-rating .place-name {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.enterprise-rating .place {
+  font-weight: bold;
 }
 
 .enterprise-rating .city {
@@ -90,18 +86,11 @@
 }
 
 .enterprise-rating label {
-    font-size: 13px;
-    margin-bottom: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .enterprise-rating select {
-    padding: 4px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 13px;
-  }
-  
+  font-size: 13px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 </style>
