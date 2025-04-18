@@ -1,40 +1,19 @@
 <template>
-  <Header
-    :showButtons="false"
-    :isTransparent="true"
-    @layerChanged="updateLayer"
-  />
+  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
   <EnterpriseRating />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup
-    :show="showPopup"
-    :x="popupX"
-    :y="popupY"
-    :title="popupTitle"
-    :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData"
-    @close="showPopup = false"
-  />
+  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData" @close="showPopup = false" />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
       <div class="radio-group">
         <label>
-          <input
-            type="radio"
-            v-model="selectedLayer"
-            value="smallParticles"
-            @change="updateLayer"
-          />
+          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
           Мелкие частицы
         </label>
         <label>
-          <input
-            type="radio"
-            v-model="selectedLayer"
-            value="otherParticles"
-            @change="updateLayer"
-          />
+          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
           Другие частицы
         </label>
       </div>
@@ -54,12 +33,15 @@ import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import { Circle as CircleGeom } from "ol/geom";
 import Feature from "ol/Feature";
 import { fromLonLat } from "ol/proj";
-import { Style, Fill } from "ol/style";
+import { Style, Icon, Stroke, Fill, Circle as CircleStyle } from 'ol/style';
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
+import { Point } from 'ol/geom';
+
+import logoImage from "@/assets/IconClicker.png";
+
 
 export default {
   name: "MapComponent",
@@ -260,10 +242,10 @@ export default {
     drawPoints() {
       this.enterprisesData.forEach((enterprise) => {
         enterprise.emissionSources.forEach(
-            (source) => {
-              this.addPointWithPopup(enterprise, source, 200);
-            }
-          );
+          (source) => {
+            this.addPointWithPopup(enterprise, source, 200);
+          }
+        );
       });
     },
     addMapClickHandler() {
@@ -315,9 +297,11 @@ export default {
         ],
       };
     },
-    addPointWithPopup(enterprise, source, radius) {
+
+
+    addPointWithPopup(enterprise, source) {
       const pointFeature = new Feature({
-        geometry: new CircleGeom(fromLonLat([source.lon, source.lat]), radius),
+        geometry: new Point(fromLonLat([source.lon, source.lat])),
       });
 
       const info = source;
@@ -327,13 +311,20 @@ export default {
       });
 
       const pointStyle = new Style({
-        fill: new Fill({
-          color: "rgba(72, 84, 198, 0.8)",
+        image: new Icon({
+          src: logoImage,
+          imgSize: [24, 24],
+          scale: 0.06,
+          anchor: [0.5, 1],
         }),
       });
+
+
       pointFeature.setStyle(pointStyle);
+
       this.vectorSource.addFeature(pointFeature);
     },
+
     addCursorPointerHandler() {
       this.map.on("pointermove", (event) => {
         const pixel = this.map.getEventPixel(event.originalEvent);
@@ -346,6 +337,7 @@ export default {
         }
       });
     },
+
     drawEllipse() {
       if (this.selectedLayer === "smallParticles") {
         this.enterprisesData.forEach((enterprise) => {
