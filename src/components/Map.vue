@@ -1,19 +1,40 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
+  <Header
+    :showButtons="false"
+    :isTransparent="true"
+    @layerChanged="updateLayer"
+  />
   <EnterpriseRating />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData" @close="showPopup = false" />
+  <Popup
+    :show="showPopup"
+    :x="popupX"
+    :y="popupY"
+    :title="popupTitle"
+    :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData"
+    @close="showPopup = false"
+  />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
       <div class="radio-group">
         <label>
-          <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="smallParticles"
+            @change="updateLayer"
+          />
           Мелкие частицы
         </label>
         <label>
-          <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
+          <input
+            type="radio"
+            v-model="selectedLayer"
+            value="otherParticles"
+            @change="updateLayer"
+          />
           Другие частицы
         </label>
       </div>
@@ -35,13 +56,12 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import { fromLonLat } from "ol/proj";
-import { Style, Icon, Stroke, Fill, Circle as CircleStyle } from 'ol/style';
+import { Style, Icon, Stroke, Fill, Circle as CircleStyle } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
-import { Point } from 'ol/geom';
+import { Point } from "ol/geom";
 
-import logoImage from "@/assets/IconClicker.png";
-
+import logoImage from "@/assets/emission_source.png";
 
 export default {
   name: "MapComponent",
@@ -241,11 +261,9 @@ export default {
     },
     drawPoints() {
       this.enterprisesData.forEach((enterprise) => {
-        enterprise.emissionSources.forEach(
-          (source) => {
-            this.addPointWithPopup(enterprise, source, 200);
-          }
-        );
+        enterprise.emissionSources.forEach((source) => {
+          this.addPointWithPopup(enterprise, source, 200);
+        });
       });
     },
     addMapClickHandler() {
@@ -290,15 +308,13 @@ export default {
         datasets: [
           {
             label: `PM2.5 (${featureInfo.name})`,
-            data: [12, 19, 8, 15, 25, 30, 18, 22], // Тестовые данные
+            data: [12, 19, 8, 15, 25, 30, 18, 22],
             borderColor: "red",
             borderWidth: 2,
           },
         ],
       };
     },
-
-
     addPointWithPopup(enterprise, source) {
       const pointFeature = new Feature({
         geometry: new Point(fromLonLat([source.lon, source.lat])),
@@ -319,25 +335,29 @@ export default {
         }),
       });
 
-
       pointFeature.setStyle(pointStyle);
+      pointFeature.set('selectable', true)
 
       this.vectorSource.addFeature(pointFeature);
     },
-
     addCursorPointerHandler() {
       this.map.on("pointermove", (event) => {
         const pixel = this.map.getEventPixel(event.originalEvent);
-        const hit = this.map.hasFeatureAtPixel(pixel);
+        const features = [];
 
-        if (hit) {
+        this.map.forEachFeatureAtPixel(pixel, (feature, layer) => {
+          if (feature.get("selectable")) {
+            features.push(feature);
+          }
+        });
+
+        if (features.length > 0) {
           this.map.getTargetElement().style.cursor = "pointer";
         } else {
           this.map.getTargetElement().style.cursor = "";
         }
       });
     },
-
     drawEllipse() {
       if (this.selectedLayer === "smallParticles") {
         this.enterprisesData.forEach((enterprise) => {
