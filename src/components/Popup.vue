@@ -46,7 +46,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 1000;
+  z-index: 1;
   text-align: left;
   transform: translate(-50%, -100%);
 }

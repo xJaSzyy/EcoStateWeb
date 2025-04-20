@@ -50,6 +50,7 @@ export default {
   background-color: white;
   height: 64px;
   box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
 }
 
 .logo {

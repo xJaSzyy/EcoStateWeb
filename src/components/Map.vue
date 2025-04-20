@@ -89,6 +89,8 @@ export default {
       popupChartData: null,
       showRadio: false,
       showButtons: false,
+      fixedCoordinates: null,
+      updatePopupInterval: null,
     };
   },
   watch: {
@@ -285,6 +287,11 @@ export default {
             this.popupX = pixel[0];
             this.popupY = pixel[1];
             this.showPopup = true;
+
+            if (!this.fixedCoordinates) {
+              this.fixedCoordinates = coordinate;
+              this.startPopupUpdate(); 
+            }
           }
         });
 
@@ -292,6 +299,25 @@ export default {
           this.showPopup = false;
         }
       });
+    },
+    startPopupUpdate() {
+      if (this.updatePopupInterval) {
+        clearInterval(this.updatePopupInterval);
+      }
+
+      this.updatePopupInterval = setInterval(() => {
+        if (this.fixedCoordinates) {
+          const pixel = this.map.getPixelFromCoordinate(this.fixedCoordinates);
+          this.popupX = pixel[0];
+          this.popupY = pixel[1];
+        }
+      }, 0.1);
+    },
+    stopPopupUpdate() {
+      if (this.updatePopupInterval) {
+        clearInterval(this.updatePopupInterval);
+        this.updatePopupInterval = null;
+      }
     },
     generateChartData(featureInfo) {
       return {
@@ -336,7 +362,7 @@ export default {
       });
 
       pointFeature.setStyle(pointStyle);
-      pointFeature.set('selectable', true)
+      pointFeature.set("selectable", true);
 
       this.vectorSource.addFeature(pointFeature);
     },
