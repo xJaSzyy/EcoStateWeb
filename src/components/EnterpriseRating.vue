@@ -46,6 +46,7 @@ onMounted(async () => {
   gap: 6px;
   z-index: 999;
   text-align: left;
+  width: max-content;
 }
 
 .enterprise-rating h3 {
@@ -63,7 +64,6 @@ onMounted(async () => {
 .enterprise-rating .enterprise-row {
   display: flex;
   flex-direction: column;
-  /* Сделаем вертикальное расположение элементов */
   gap: 4px;
   line-height: 1.4;
   border-bottom: 1px solid #eee;
