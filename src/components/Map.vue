@@ -15,6 +15,10 @@
     :chartData="popupChartData"
     @close="showPopup = false"
   />
+  <label class="checkbox-label">
+    <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
+    Показать сетку
+  </label>
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
@@ -60,6 +64,11 @@ import { Style, Icon, Stroke, Fill, Circle as CircleStyle } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
 import { Point } from "ol/geom";
+import GeoJSON from "ol/format/GeoJSON";
+import { fromExtent } from "ol/geom/Polygon";
+import { getCenter } from "ol/extent";
+import Text from "ol/style/Text";
+import { isEmpty } from 'ol/extent';
 
 import logoImage from "@/assets/emission_source.png";
 
@@ -76,6 +85,7 @@ export default {
       enterprisesData: [],
       map: null,
       vectorSource: new VectorSource(),
+      tileGridSource: new VectorSource(),
       windDirection: 0,
       windSpeed: 0,
       airTemp: 0,
@@ -91,10 +101,18 @@ export default {
       showButtons: false,
       fixedCoordinates: null,
       updatePopupInterval: null,
+      drawnCircles: [],
+      pointFeatures: [],
+      isChecked: false,
     };
   },
   watch: {
     selectedLayer() {
+      if (this.isChecked) {
+        this.vectorSource.clear();
+        this.tileGridSource.clear();
+        this.fetchAllDistricts();
+      }
       this.fetchAndUpdateData();
     },
   },
@@ -122,10 +140,110 @@ export default {
       const vectorLayer = new VectorLayer({
         source: this.vectorSource,
       });
+      const tileLayer = new VectorLayer({
+        source: this.tileGridSource,
+      });
+
+      this.map.addLayer(tileLayer);
       this.map.addLayer(vectorLayer);
     },
     updateLayer() {
       this.$emit("layerChanged", this.selectedLayer);
+    },
+    fetchAllDistricts() {
+      const districts = [
+        "Заводский",
+        "Кировский",
+        "Ленинский",
+        "Рудничный",
+        "Центральный",
+      ];
+
+      const promises = districts.map((name) => {
+        return fetch(`${name}.geojson`)
+          .then((res) => res.json())
+          .then((data) => {
+            const features = new GeoJSON().readFeatures(data, {
+              dataProjection: "EPSG:4326",
+              featureProjection: "EPSG:3857",
+            });
+
+            const districtFeature = features[0];
+
+            this.drawTileGrid(districtFeature, this.tileGridSource, 1500, name);
+          })
+          .catch((error) =>
+            console.error(`Ошибка загрузки ${name}.geojson:`, error)
+          );
+      });
+
+      Promise.all(promises).then(() => {
+        const extent = this.vectorSource.getExtent();
+
+        if (!isEmpty(extent)) {
+          this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+        } else {
+          console.warn("Попытка подогнать карту под пустой экстент");
+        }
+      });
+    },
+    drawTileGrid(
+      polygonFeature,
+      vectorSource,
+      tileSize = 1500,
+      regionName = ""
+    ) {
+      const polygon = polygonFeature.getGeometry();
+      const extent = polygon.getExtent();
+
+      const globalStartX = Math.floor(extent[0] / tileSize) * tileSize;
+      const globalStartY = Math.floor(extent[1] / tileSize) * tileSize;
+
+      for (let x = globalStartX; x < extent[2]; x += tileSize) {
+        for (let y = globalStartY; y < extent[3]; y += tileSize) {
+          const tileExtent = [x, y, x + tileSize, y + tileSize];
+
+          if (polygon.intersectsExtent(tileExtent)) {
+            const tileFeature = new Feature({
+              geometry: fromExtent(tileExtent),
+            });
+
+            tileFeature.setStyle(
+              new Style({
+                fill: new Fill({
+                  color: `rgba(255, 255, 255, 0.6)`,
+                }),
+              })
+            );
+
+            vectorSource.addFeature(tileFeature);
+          }
+        }
+      }
+
+      if (regionName) {
+        const center = getCenter(extent);
+        const labelFeature = new Feature({
+          geometry: new Point(center),
+        });
+        labelFeature.setStyle(
+          new Style({
+            text: new Text({
+              text: regionName,
+              font: "bold 12px sans-serif",
+              fill: new Fill({ color: "#000" }),
+            }),
+          })
+        );
+
+        vectorSource.addFeature(labelFeature);
+      }
+    },
+    getRandomColorWithAlpha(alpha = 0.5) {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     },
     async fetchAndUpdateData() {
       this.vectorSource.clear();
@@ -290,7 +408,7 @@ export default {
 
             if (!this.fixedCoordinates) {
               this.fixedCoordinates = coordinate;
-              this.startPopupUpdate(); 
+              this.startPopupUpdate();
             }
           }
         });
@@ -365,6 +483,8 @@ export default {
       pointFeature.set("selectable", true);
 
       this.vectorSource.addFeature(pointFeature);
+
+      this.pointFeatures.push(pointFeature);
     },
     addCursorPointerHandler() {
       this.map.on("pointermove", (event) => {
@@ -444,6 +564,46 @@ export default {
         })
       );
       this.vectorSource.addFeature(ellipse);
+
+      this.drawnCircles.push(ellipse);
+
+      if (this.isChecked) {
+        this.highlightTilesInsideEllipse(ellipse.getGeometry());
+      }
+    },
+    highlightTilesInsideEllipse(ellipseGeometry) {
+      const tileFeatures = this.tileGridSource.getFeatures();
+
+      tileFeatures.forEach((tile) => {
+        const tileGeometry = tile.getGeometry();
+        const isIntersecting = ellipseGeometry.intersectsExtent(
+          tileGeometry.getExtent()
+        );
+
+        if (isIntersecting) {
+          tile.set("isDanger", true);
+          tile.setStyle(
+            new Style({
+              fill: new Fill({
+                color: "rgba(255, 0, 0, 0.5)",
+              }),
+            })
+          );
+        } else {
+          if (!tile.get("isDanger")) {
+            tile.setStyle(
+              new Style({
+                fill: new Fill({
+                  color: `rgba(171, 209, 98, 0.6)`,
+                }),
+              })
+            );
+          }
+        }
+      });
+
+      this.clearDrawnCircles();
+      this.removeAllPoints();
     },
     hexToRgbA(hex) {
       var c;
@@ -460,6 +620,33 @@ export default {
         );
       }
       throw new Error("Bad Hex");
+    },
+    clearDrawnCircles() {
+      this.drawnCircles.forEach((ellipse) => {
+        this.vectorSource.removeFeature(ellipse);
+      });
+
+      this.drawnCircles = [];
+    },
+    removeAllPoints() {
+      this.pointFeatures.forEach((feature) => {
+        this.vectorSource.removeFeature(feature);
+      });
+
+      this.pointFeatures = [];
+    },
+    handleCheckboxChange() {
+      console.log("Состояние чекбокса изменилось:", this.isChecked);
+
+      this.vectorSource.clear();
+      this.tileGridSource.clear();
+
+      if (this.isChecked) {
+        this.fetchAllDistricts();
+        this.fetchAndUpdateData();
+      } else {
+        this.fetchAndUpdateData();
+      }
     },
   },
 };
@@ -491,5 +678,25 @@ label {
 
 input[type="radio"] {
   margin-right: 8px;
+}
+
+.checkbox-label {
+  font-size: 16px;
+  cursor: pointer; /* Указатель на элемент */
+  display: flex;
+  align-items: center; /* Выравнивание текста и чекбокса по центру */
+  position: absolute;
+  top: 88px;
+  right: 200px;
+  z-index: 1000;
+}
+
+.checkbox-label:hover {
+  color: #007bff; /* Цвет текста при наведении */
+}
+
+input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #007bff;
 }
 </style>
