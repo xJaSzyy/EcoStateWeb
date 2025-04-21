@@ -68,7 +68,7 @@ import GeoJSON from "ol/format/GeoJSON";
 import { fromExtent } from "ol/geom/Polygon";
 import { getCenter } from "ol/extent";
 import Text from "ol/style/Text";
-import { isEmpty } from 'ol/extent';
+import { isEmpty } from "ol/extent";
 
 import logoImage from "@/assets/emission_source.png";
 
@@ -406,10 +406,8 @@ export default {
             this.popupY = pixel[1];
             this.showPopup = true;
 
-            if (!this.fixedCoordinates) {
-              this.fixedCoordinates = coordinate;
-              this.startPopupUpdate();
-            }
+            this.fixedCoordinates = coordinate;
+            this.startPopupUpdate();
           }
         });
 
@@ -682,9 +680,9 @@ input[type="radio"] {
 
 .checkbox-label {
   font-size: 16px;
-  cursor: pointer; /* Указатель на элемент */
+  cursor: pointer;
   display: flex;
-  align-items: center; /* Выравнивание текста и чекбокса по центру */
+  align-items: center;
   position: absolute;
   top: 88px;
   right: 200px;
@@ -692,7 +690,7 @@ input[type="radio"] {
 }
 
 .checkbox-label:hover {
-  color: #007bff; /* Цвет текста при наведении */
+  color: #007bff;
 }
 
 input[type="checkbox"]:checked {
