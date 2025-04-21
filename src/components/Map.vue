@@ -178,7 +178,7 @@ export default {
       });
 
       Promise.all(promises).then(() => {
-        const extent = this.vectorSource.getExtent();
+        const extent = this.tileGridSource.getExtent();
 
         if (!isEmpty(extent)) {
           this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
@@ -233,10 +233,11 @@ export default {
               font: "bold 12px sans-serif",
               fill: new Fill({ color: "#000" }),
             }),
+            zIndex: 1000,
           })
         );
 
-        vectorSource.addFeature(labelFeature);
+        this.vectorSource.addFeature(labelFeature);
       }
     },
     getRandomColorWithAlpha(alpha = 0.5) {
@@ -634,8 +635,6 @@ export default {
       this.pointFeatures = [];
     },
     handleCheckboxChange() {
-      console.log("Состояние чекбокса изменилось:", this.isChecked);
-
       this.vectorSource.clear();
       this.tileGridSource.clear();
 
