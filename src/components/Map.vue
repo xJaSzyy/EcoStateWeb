@@ -14,12 +14,10 @@
     :featureInfo="popupFeatureInfo"
     :chartData="popupChartData"
     @close="showPopup = false"
-    @change="
-      showSimulationPanel = true;
-      showPopup = false;
-    "
+    @change="setSimulationStartData"
   />
   <SimulationPanel
+    :startData="simulationStartData"
     v-if="showSimulationPanel"
     @buildSimulation="handleSimulationStart"
   />
@@ -116,7 +114,8 @@ export default {
       pointFeatures: [],
       isChecked: false,
       currentEnterprise: null,
-      currentSource: null
+      currentSource: null,
+      simulationStartData: null,
     };
   },
   watch: {
@@ -711,9 +710,34 @@ export default {
       }
     },
     handleSimulationStart(data) {
-      const enterpriseIndex = this.enterprisesData.indexOf(this.currentEnterprise);
-      const sourceIndex = this.enterprisesData[enterpriseIndex].emissionSources.indexOf(this.currentSource);
-      this.fetchConcentrationCalculateSimulation(enterpriseIndex, sourceIndex, data);
+      try {
+        const enterpriseIndex = this.enterprisesData.indexOf(
+          this.currentEnterprise
+        );
+        const sourceIndex = this.enterprisesData[
+          enterpriseIndex
+        ].emissionSources.indexOf(this.currentSource);
+        this.fetchConcentrationCalculateSimulation(
+          enterpriseIndex,
+          sourceIndex,
+          data
+        );
+      } catch (error) {
+        console.error("Ошибка при запросе данных:", error);
+      }
+    },
+    setSimulationStartData() {
+      this.simulationStartData = {
+        ejectedTemp: this.currentSource.ejectedTemp,
+        airTemp: this.airTemp,
+        avgExitSpeed: this.currentSource.avgExitSpeed,
+        heightSource: this.currentSource.heightSource,
+        diameterSource: this.currentSource.diameterSource,
+        windSpeed: this.windSpeed,
+      };
+
+      this.showSimulationPanel = true;
+      this.showPopup = false;
     },
   },
 };

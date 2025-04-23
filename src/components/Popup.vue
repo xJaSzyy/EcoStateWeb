@@ -5,8 +5,12 @@
     <div class="popup-content">
       <div v-if="featureInfo">
         <div class="popup-row"><b>Название:</b> {{ featureInfo.name }}</div>
-        <div class="popup-row"><b>Диаметр источника:</b> {{ featureInfo.diameterSource }} м</div>
-        <div class="popup-row"><b>Высота источника:</b> {{ featureInfo.heightSource }} м</div>
+        <div class="popup-row">
+          <b>Диаметр источника:</b> {{ featureInfo.diameterSource }} м
+        </div>
+        <div class="popup-row">
+          <b>Высота источника:</b> {{ featureInfo.heightSource }} м
+        </div>
       </div>
 
       <div v-if="chartData">
@@ -30,9 +34,9 @@ export default {
     title: String,
     x: Number,
     y: Number,
-    featureInfo: Object, 
-    chartData: Object 
-  }
+    featureInfo: Object,
+    chartData: Object,
+  },
 };
 </script>
 
