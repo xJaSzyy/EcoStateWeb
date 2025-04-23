@@ -1,76 +1,114 @@
 <template>
-  <div class="panel-container">
-    <div class="sliders">
-      <div class="slider-row">
-        <label>Температура выбрасываемой ГВС:</label>
-        <input
-          class="ejectedTemp"
-          type="range"
-          min="235"
-          max="265"
-          step="1"
-          value="250"
-        />
+    <div class="panel-container">
+      <div class="sliders">
+        <!-- Добавляем v-model для каждого ползунка -->
+        <div class="slider-row">
+          <label>Температура выбрасываемой ГВС:</label>
+          <input
+            v-model.number="formData.ejectedTemp"
+            type="range"
+            min="235"
+            max="265"
+            step="1"
+          />
+          <span>{{ formData.ejectedTemp }}°C</span>
+        </div>
+  
+        <div class="slider-row">
+          <label>Температура атмосферного воздуха:</label>
+          <input
+            v-model.number="formData.airTemp"
+            type="range"
+            min="-40"
+            max="40"
+            step="1"
+          />
+          <span>{{ formData.airTemp }}°C</span>
+        </div>
+  
+        <!-- Аналогично для остальных ползунков -->
+        <div class="slider-row">
+          <label>Средняя скорость выхода ГВС:</label>
+          <input
+            v-model.number="formData.avgExitSpeed"
+            type="range"
+            min="15"
+            max="31"
+            step="1"
+          />
+          <span>{{ formData.avgExitSpeed }} м/с</span>
+        </div>
+  
+        <div class="slider-row">
+          <label>Высота источника выброса:</label>
+          <input
+            v-model.number="formData.heightSource"
+            type="range"
+            min="15"
+            max="150"
+            step="1"
+          />
+          <span>{{ formData.heightSource }} м</span>
+        </div>
+  
+        <div class="slider-row">
+          <label>Диаметр устья источника:</label>
+          <input
+            v-model.number="formData.diameterSource"
+            type="range"
+            min="1"
+            max="11"
+            step="1"
+          />
+          <span>{{ formData.diameterSource }} м</span>
+        </div>
+  
+        <div class="slider-row">
+          <label>Скорость ветра:</label>
+          <input
+            v-model.number="formData.windSpeed"
+            type="range"
+            min="0"
+            max="30"
+            step="1"
+          />
+          <span>{{ formData.windSpeed }} м/с</span>
+        </div>
       </div>
-      <div class="slider-row">
-        <label>Температура атмосферного воздуха:</label>
-        <input
-          class="airTemp"
-          type="range"
-          min="-40"
-          max="40"
-          step="1"
-          value="0"
-        />
-      </div>
-      <div class="slider-row">
-        <label>Средняя скорость выхода ГВС:</label>
-        <input
-          class="avgExitSpeed"
-          type="range"
-          min="15"
-          max="31"
-          step="1"
-          value="23"
-        />
-      </div>
-      <div class="slider-row">
-        <label>Высота источника выброса:</label>
-        <input
-          class="heightSource"
-          type="range"
-          min="15"
-          max="150"
-          step="1"
-          value="82.5"
-        />
-      </div>
-      <div class="slider-row">
-        <label>Диаметр устья источника:</label>
-        <input
-          class="diameterSource"
-          type="range"
-          min="1"
-          max="11"
-          step="1"
-          value="6"
-        />
-      </div>
-      <div class="slider-row">
-        <label>Скорость ветра:</label>
-        <input
-          class="windSpeed"
-          type="range"
-          min="0"
-          max="30"
-          step="1"
-          value="15"
-        />
-      </div>
+  
+      <button 
+        class="build-button" 
+        @click="emitSimulationData"
+      >
+        Построить
+      </button>
     </div>
-    <button class="build-button">Построить</button>
-  </div>
-</template>
+  </template>
+  
+  <script setup>
+  import { reactive } from 'vue'
+  
+  const emit = defineEmits(['buildSimulation'])
+  
+  // Инициализируем данные формы
+  const formData = reactive({
+    ejectedTemp: 250,
+    airTemp: 0,
+    avgExitSpeed: 23,
+    heightSource: 82.5,
+    diameterSource: 6,
+    windSpeed: 15
+  })
+  
+  const emitSimulationData = () => {
+    emit('buildSimulation', {
+      ...formData,
+      // Можно добавить преобразования данных
+      heightSource: parseFloat(formData.heightSource),
+      diameterSource: parseFloat(formData.diameterSource)
+    })
+  }
+  </script>
 
 <style scoped>
 .panel-container {

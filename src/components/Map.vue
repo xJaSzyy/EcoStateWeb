@@ -14,9 +14,15 @@
     :featureInfo="popupFeatureInfo"
     :chartData="popupChartData"
     @close="showPopup = false"
-    @change="showSimulationPanel = true"
+    @change="
+      showSimulationPanel = true;
+      showPopup = false;
+    "
   />
-  <SimulationPanel v-if="showSimulationPanel" />
+  <SimulationPanel
+    v-if="showSimulationPanel"
+    @buildSimulation="handleSimulationStart"
+  />
   <label class="checkbox-label">
     <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
     Показать сетку
@@ -82,7 +88,7 @@ export default {
     WeatherInfo,
     Popup,
     EnterpriseRating,
-    SimulationPanel
+    SimulationPanel,
   },
   data() {
     return {
@@ -109,6 +115,8 @@ export default {
       drawnCircles: [],
       pointFeatures: [],
       isChecked: false,
+      currentEnterprise: null,
+      currentSource: null
     };
   },
   watch: {
@@ -347,6 +355,53 @@ export default {
         sourceIndex
       ].lastConcentration = result.averageConcentration;
     },
+    async fetchConcentrationCalculateSimulation(
+      enterpriseIndex,
+      sourceIndex,
+      data
+    ) {
+      const enterprise = this.enterprisesData[enterpriseIndex];
+      const params = new URLSearchParams({
+        EjectedTemp: data.ejectedTemp,
+        AirTemp: data.airTemp,
+        AvgExitSpeed: data.avgExitSpeed,
+        HeightSource: data.heightSource,
+        DiameterSource: data.diameterSource,
+        TempStratificationRatio: enterprise.tempStratificationRatio,
+        SedimentationRateRatio: enterprise.sedimentationRateRatio,
+        WindSpeed: data.windSpeed,
+        concentration: 5,
+      });
+
+      const response = await fetch(
+        API_BASE_URL + "/concentration/calculate?" + params.toString(),
+        {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneLength = result.dangerZoneLength;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneWidth = result.dangerZoneWidth;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneColorHex = result.dangerZoneColorHex;
+      this.enterprisesData[enterpriseIndex].emissionSources[
+        sourceIndex
+      ].dangerZoneAngle = result.dangerZoneAngle;
+
+      this.vectorSource.clear();
+      this.drawPoints();
+      this.drawEllipse();
+    },
     async fetchEmissionCalculate(enterpriseIndex, sourceIndex) {
       const params = new URLSearchParams({
         EjectedTemp:
@@ -407,6 +462,8 @@ export default {
             this.popupTitle = "Информация об объекте";
             this.popupFeatureInfo = featureInfo;
             //this.popupChartData = this.generateChartData(featureInfo);
+            this.currentEnterprise = featureInfo.enterprise;
+            this.currentSource = featureInfo.source;
 
             this.popupX = pixel[0];
             this.popupY = pixel[1];
@@ -471,8 +528,10 @@ export default {
 
       const info = source;
       info.name = enterprise.name;
+      info.enterprise = enterprise;
+      info.source = source;
       pointFeature.setProperties({
-        info: source,
+        info: info,
       });
 
       const pointStyle = new Style({
@@ -650,6 +709,11 @@ export default {
       } else {
         this.fetchAndUpdateData();
       }
+    },
+    handleSimulationStart(data) {
+      const enterpriseIndex = this.enterprisesData.indexOf(this.currentEnterprise);
+      const sourceIndex = this.enterprisesData[enterpriseIndex].emissionSources.indexOf(this.currentSource);
+      this.fetchConcentrationCalculateSimulation(enterpriseIndex, sourceIndex, data);
     },
   },
 };
