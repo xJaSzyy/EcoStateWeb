@@ -91,7 +91,7 @@
 <script setup>
 import { reactive, watch } from "vue";
 
-const emit = defineEmits(["buildSimulation", "close"]); // <-- Сначала определяем emit!
+const emit = defineEmits(["buildSimulation", "close"]); 
 
 const props = defineProps({
   startData: Object,
