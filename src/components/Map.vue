@@ -20,7 +20,9 @@
     :startData="simulationStartData"
     v-if="showSimulationPanel"
     @buildSimulation="handleSimulationStart"
+    @close="showSimulationPanel = false"
   />
+
   <label class="checkbox-label">
     <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
     Показать сетку
@@ -116,6 +118,7 @@ export default {
       currentEnterprise: null,
       currentSource: null,
       simulationStartData: null,
+      showSimulationPanel: false,
     };
   },
   watch: {
