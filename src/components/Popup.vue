@@ -14,6 +14,7 @@
       </div>
     </div>
 
+    <button class="change-btn" @click="$emit('change')">Изменить</button>
     <button class="close-btn" @click="$emit('close')">Закрыть</button>
   </div>
 </template>
@@ -64,10 +65,23 @@ export default {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  margin-top: 10px;
 }
 
 .close-btn:hover {
   background: #cc0000;
+}
+
+.change-btn {
+  background: #4d91ff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.change-btn:hover {
+  background: #0e55c8;
 }
 </style>

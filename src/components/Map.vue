@@ -14,7 +14,9 @@
     :featureInfo="popupFeatureInfo"
     :chartData="popupChartData"
     @close="showPopup = false"
+    @change="showSimulationPanel = true"
   />
+  <SimulationPanel v-if="showSimulationPanel" />
   <label class="checkbox-label">
     <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
     Показать сетку
@@ -51,6 +53,7 @@ import Header from "./Header.vue";
 import WeatherInfo from "./WeatherInfo.vue";
 import Popup from "./Popup.vue";
 import EnterpriseRating from "./EnterpriseRating.vue";
+import SimulationPanel from "./SimulationPanel.vue";
 
 import "ol/ol.css";
 import { Map, View } from "ol";
@@ -70,7 +73,7 @@ import { getCenter } from "ol/extent";
 import Text from "ol/style/Text";
 import { isEmpty } from "ol/extent";
 
-import logoImage from "@/assets/emission_source.png";
+import sourceImage from "@/assets/emission_source.png";
 
 export default {
   name: "MapComponent",
@@ -79,6 +82,7 @@ export default {
     WeatherInfo,
     Popup,
     EnterpriseRating,
+    SimulationPanel
   },
   data() {
     return {
@@ -90,6 +94,7 @@ export default {
       windSpeed: 0,
       airTemp: 0,
       showPopup: false,
+      showSimulationPanel: false,
       popupTitle: "",
       popupData: "",
       selectedLayer: "smallParticles",
@@ -401,7 +406,7 @@ export default {
 
             this.popupTitle = "Информация об объекте";
             this.popupFeatureInfo = featureInfo;
-            this.popupChartData = this.generateChartData(featureInfo);
+            //this.popupChartData = this.generateChartData(featureInfo);
 
             this.popupX = pixel[0];
             this.popupY = pixel[1];
@@ -414,6 +419,7 @@ export default {
 
         if (!clickedOnFeature) {
           this.showPopup = false;
+          this.showSimulationPanel = false;
         }
       });
     },
@@ -471,7 +477,7 @@ export default {
 
       const pointStyle = new Style({
         image: new Icon({
-          src: logoImage,
+          src: sourceImage,
           imgSize: [24, 24],
           scale: 0.06,
           anchor: [0.5, 1],
