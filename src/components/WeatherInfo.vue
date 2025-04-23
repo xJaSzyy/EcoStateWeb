@@ -88,7 +88,7 @@ export default {
 <style>
 #weather-info {
   position: absolute;
-  top: 184px; 
+  top: 217px; 
   right: 24px;
   background-color: #ffffff;
   padding: 12px;

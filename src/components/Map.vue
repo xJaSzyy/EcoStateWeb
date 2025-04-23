@@ -29,7 +29,8 @@
   </label>
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
-    <teleport to="body">
+  <teleport to="body">
+    <div class="control-panel">
       <div class="radio-group">
         <label>
           <input
@@ -50,8 +51,15 @@
           Другие частицы
         </label>
       </div>
-    </teleport>
-  </div>
+      <div class="checkbox-container">
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
+          Показать сетку
+        </label>
+      </div>
+    </div>
+  </teleport>
+</div>
 </template>
 
 <script>
@@ -752,45 +760,71 @@ export default {
   height: 100vh;
 }
 
-.radio-group {
+.control-panel {
   position: fixed;
   top: 88px;
   right: 24px;
   background: white;
   border-radius: 12px;
-  padding: 10px;
+  padding: 15px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   width: max-content;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-label {
-  display: block;
-  padding: 5px 10px;
-  cursor: pointer;
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-input[type="radio"] {
-  margin-right: 8px;
+.checkbox-container {
+  padding-top: 8px;
+  border-top: 1px solid #eee;
 }
 
 .checkbox-label {
-  font-size: 16px;
-  cursor: pointer;
   display: flex;
   align-items: center;
-  position: absolute;
-  top: 88px;
-  right: 200px;
-  z-index: 1000;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 0;
+  margin: 0;
 }
 
 .checkbox-label:hover {
   color: #007bff;
 }
 
-input[type="checkbox"]:checked {
+.checkbox-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
   background-color: #007bff;
   border-color: #007bff;
 }
+
+.checkbox-label input[type="checkbox"]:checked::after {
+  position: absolute;
+  color: white;
+  font-size: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 </style>
