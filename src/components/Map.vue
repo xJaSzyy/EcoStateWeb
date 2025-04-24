@@ -90,7 +90,7 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import { fromLonLat } from "ol/proj";
-import { Style, Icon, Stroke, Fill, Circle as CircleStyle } from "ol/style";
+import { Style, Icon, Fill } from "ol/style";
 import { Polygon } from "ol/geom";
 import { API_BASE_URL } from "../api/config";
 import { Point } from "ol/geom";
@@ -98,7 +98,6 @@ import GeoJSON from "ol/format/GeoJSON";
 import { fromExtent } from "ol/geom/Polygon";
 import { getCenter } from "ol/extent";
 import Text from "ol/style/Text";
-import { isEmpty } from "ol/extent";
 
 import sourceImage from "@/assets/emission_source.png";
 
@@ -671,8 +670,7 @@ export default {
               }),
             })
           );
-        } else {
-          if (!tile.get("isDanger")) {
+        } else if (!tile.get("isDanger")) {
             tile.setStyle(
               new Style({
                 fill: new Fill({
@@ -681,7 +679,6 @@ export default {
               })
             );
           }
-        }
       });
 
       this.clearDrawnCircles();
