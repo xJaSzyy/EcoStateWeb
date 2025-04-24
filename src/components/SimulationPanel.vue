@@ -193,7 +193,7 @@ const emitClose = () => {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  margin-bottom: 25px;
+  margin-bottom: 0;
   flex-grow: 1;
 }
 
@@ -241,6 +241,7 @@ const emitClose = () => {
 
 .build-button {
   margin-top: auto;
+  margin-bottom: 32px;
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 600;
