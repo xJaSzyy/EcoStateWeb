@@ -116,6 +116,14 @@ watch(
   { immediate: true }
 );
 
+watch(
+  formData,
+  () => {
+    emitSimulationData();
+  },
+  { deep: true }
+);
+
 const emitSimulationData = () => {
   emit("buildSimulation", {
     ...formData,
