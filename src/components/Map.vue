@@ -39,10 +39,10 @@
     <div class="gradient-bar"></div>
     <div class="legend-labels">
       <span>0</span>
-      <span>25</span>
-      <span>50</span>
-      <span>75</span>
-      <span>100+</span>
+      <span>35</span>
+      <span>55</span>
+      <span>125</span>
+      <span>225+</span>
     </div>
   </div>
 
@@ -184,16 +184,6 @@ export default {
           .catch((error) =>
             console.error(`Ошибка загрузки ${name}.geojson:`, error)
           );
-      });
-
-      Promise.all(promises).then(() => {
-        const extent = this.tileGridSource.getExtent();
-
-        if (!isEmpty(extent)) {
-          this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
-        } else {
-          console.warn("Попытка подогнать карту под пустой экстент");
-        }
       });
     },
     drawTileGrid(
@@ -835,11 +825,11 @@ export default {
   height: 20px;
   width: 200px;
   background: linear-gradient(to right,
-      #00ff00,
-      #ffff00,
-      #ff9900,
-      #ff0000,
-      #990000);
+      #ABD162,
+      #F8D461,
+      #FB9956,
+      #F6686A,
+      #A47DB8);
   border-radius: 4px;
   margin-bottom: 5px;
 }
