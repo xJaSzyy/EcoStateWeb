@@ -61,7 +61,7 @@
   </div>
   <div
     class="map-legend"
-    v-if="selectedLayer === 'smallParticles' && !isChecked"
+    v-if="selectedLayer === 'smallParticles'"
   >
     <div class="legend-title">Уровень концентрации (мкг/м³)</div>
     <div class="gradient-bar"></div>
