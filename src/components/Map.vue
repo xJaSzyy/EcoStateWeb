@@ -644,11 +644,16 @@ export default {
 
       this.drawnCircles.push(ellipse);
 
+      const highlightColor =
+        this.isChecked && this.selectedLayer === "smallParticles"
+          ? colorRgba
+          : "rgba(255, 0, 0, 0.5)";
+
       if (this.isChecked) {
-        this.highlightTilesInsideEllipse(ellipse.getGeometry());
+        this.highlightTilesInsideEllipse(ellipse.getGeometry(), highlightColor);
       }
     },
-    highlightTilesInsideEllipse(ellipseGeometry) {
+    highlightTilesInsideEllipse(ellipseGeometry, colorRgba) {
       const tileFeatures = this.tileGridSource.getFeatures();
 
       tileFeatures.forEach((tile) => {
@@ -662,7 +667,7 @@ export default {
           tile.setStyle(
             new Style({
               fill: new Fill({
-                color: "rgba(255, 0, 0, 0.5)",
+                color: colorRgba,
               }),
             })
           );
