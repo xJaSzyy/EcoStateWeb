@@ -92,5 +92,4 @@ onMounted(async () => {
   flex-direction: column;
   gap: 4px;
 }
-
 </style>

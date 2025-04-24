@@ -1,40 +1,68 @@
 <template>
-  <Header :showButtons="false" :isTransparent="true" @layerChanged="updateLayer" />
+  <Header
+    :showButtons="false"
+    :isTransparent="true"
+    @layerChanged="updateLayer"
+  />
   <EnterpriseRating />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
-  <Popup :show="showPopup" :x="popupX" :y="popupY" :title="popupTitle" :featureInfo="popupFeatureInfo"
-    :chartData="popupChartData" @close="showPopup = false" @change="setSimulationStartData" />
-  <SimulationPanel :startData="simulationStartData" v-if="showSimulationPanel" @buildSimulation="handleSimulationStart"
-    @close="showSimulationPanel = false" />
-
-  <label class="checkbox-label">
-    <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
-    Показать сетку
-  </label>
+  <Popup
+    :show="showPopup"
+    :x="popupX"
+    :y="popupY"
+    :title="popupTitle"
+    :featureInfo="popupFeatureInfo"
+    :chartData="popupChartData"
+    @close="showPopup = false"
+    @change="setSimulationStartData"
+  />
+  <SimulationPanel
+    :startData="simulationStartData"
+    v-if="showSimulationPanel"
+    @buildSimulation="handleSimulationStart"
+    @close="showSimulationPanel = false"
+  />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
     <teleport to="body">
       <div class="control-panel">
         <div class="radio-group">
           <label>
-            <input type="radio" v-model="selectedLayer" value="smallParticles" @change="updateLayer" />
+            <input
+              type="radio"
+              v-model="selectedLayer"
+              value="smallParticles"
+              @change="updateLayer"
+            />
             Мелкие частицы
           </label>
           <label>
-            <input type="radio" v-model="selectedLayer" value="otherParticles" @change="updateLayer" />
+            <input
+              type="radio"
+              v-model="selectedLayer"
+              value="otherParticles"
+              @change="updateLayer"
+            />
             Другие частицы
           </label>
         </div>
         <div class="checkbox-container">
           <label class="checkbox-label">
-            <input type="checkbox" v-model="isChecked" @change="handleCheckboxChange" />
+            <input
+              type="checkbox"
+              v-model="isChecked"
+              @change="handleCheckboxChange"
+            />
             Показать сетку
           </label>
         </div>
       </div>
     </teleport>
   </div>
-  <div class="map-legend" v-if="selectedLayer === 'smallParticles'">
+  <div
+    class="map-legend"
+    v-if="selectedLayer === 'smallParticles' && !isChecked"
+  >
     <div class="legend-title">Уровень концентрации (мкг/м³)</div>
     <div class="gradient-bar"></div>
     <div class="legend-labels">
@@ -45,7 +73,6 @@
       <span>225+</span>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -168,7 +195,7 @@ export default {
         "Центральный",
       ];
 
-      const promises = districts.map((name) => {
+      districts.map((name) => {
         return fetch(`${name}.geojson`)
           .then((res) => res.json())
           .then((data) => {
@@ -824,12 +851,14 @@ export default {
 .gradient-bar {
   height: 20px;
   width: 200px;
-  background: linear-gradient(to right,
-      #ABD162,
-      #F8D461,
-      #FB9956,
-      #F6686A,
-      #A47DB8);
+  background: linear-gradient(
+    to right,
+    #abd162,
+    #f8d461,
+    #fb9956,
+    #f6686a,
+    #a47db8
+  );
   border-radius: 4px;
   margin-bottom: 5px;
 }
