@@ -20,7 +20,7 @@
     :startData="simulationStartData"
     v-if="showSimulationPanel"
     @buildSimulation="handleSimulationStart"
-    @close="showSimulationPanel = false"
+    @close="showSimulationPanel = false; fetchAndUpdateData();"
   />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
@@ -137,13 +137,13 @@ export default {
       simulationStartData: null,
       showSimulationPanel: false,
       tilesData: [],
-      colors: {
-        1: `rgba(171, 209, 98, 0.6)`, 
-        2: `rgba(248, 212, 97, 0.6)`,
-        3: `rgba(251, 153, 86, 0.6)`,
-        4: `rgba(246, 104, 106, 0.6)`,
-        5: `rgba(164, 125, 184, 0.6)`,
-      },
+      colors: [
+        `rgba(171, 209, 98, 0.6)`,
+        `rgba(248, 212, 97, 0.6)`,
+        `rgba(251, 153, 86, 0.6)`,
+        `rgba(246, 104, 106, 0.6)`,
+        `rgba(164, 125, 184, 0.6)`,
+      ],
     };
   },
   watch: {
@@ -692,7 +692,7 @@ export default {
           tile.setStyle(
             new Style({
               fill: new Fill({
-                color: this.colors[1],
+                color: this.colors[0],
               }),
             })
           );
@@ -702,7 +702,6 @@ export default {
       this.clearDrawnCircles();
       this.removeAllPoints();
     },
-
     hexToRgbA(hex) {
       var c;
       if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
