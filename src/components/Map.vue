@@ -694,8 +694,8 @@ export default {
         c = "0x" + c.join("");
         return (
           "rgba(" +
-          [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") +
-          ", 0.8)"
+          [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(", ") +
+          ", 0.6)"
         );
       }
       throw new Error("Bad Hex");
