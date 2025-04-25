@@ -59,10 +59,7 @@
       </div>
     </teleport>
   </div>
-  <div
-    class="map-legend"
-    v-if="selectedLayer === 'smallParticles'"
-  >
+  <div class="map-legend" v-if="selectedLayer === 'smallParticles'">
     <div class="legend-title">Уровень концентрации (мкг/м³)</div>
     <div class="gradient-bar"></div>
     <div class="legend-labels">
@@ -139,6 +136,14 @@ export default {
       currentSource: null,
       simulationStartData: null,
       showSimulationPanel: false,
+      tilesData: [],
+      colors: {
+        1: `rgba(171, 209, 98, 0.6)`, 
+        2: `rgba(248, 212, 97, 0.6)`,
+        3: `rgba(251, 153, 86, 0.6)`,
+        4: `rgba(246, 104, 106, 0.6)`,
+        5: `rgba(164, 125, 184, 0.6)`,
+      },
     };
   },
   watch: {
@@ -194,6 +199,8 @@ export default {
         "Центральный",
       ];
 
+      this.districtFeatures = [];
+
       districts.map((name) => {
         return fetch(`${name}.geojson`)
           .then((res) => res.json())
@@ -204,6 +211,7 @@ export default {
             });
 
             const districtFeature = features[0];
+            this.districtFeatures.push(districtFeature);
 
             this.drawTileGrid(districtFeature, this.tileGridSource, 1500, name);
           })
@@ -242,6 +250,10 @@ export default {
             );
 
             vectorSource.addFeature(tileFeature);
+            this.tilesData.push({
+              district: polygonFeature,
+              tile: tileFeature,
+            });
           }
         }
       }
@@ -265,7 +277,7 @@ export default {
         this.vectorSource.addFeature(labelFeature);
       }
     },
-    getRandomColorWithAlpha(alpha = 0.5) {
+    getRandomColorWithAlpha(alpha = 0.6) {
       const r = Math.floor(Math.random() * 256);
       const g = Math.floor(Math.random() * 256);
       const b = Math.floor(Math.random() * 256);
@@ -646,22 +658,28 @@ export default {
       const highlightColor =
         this.isChecked && this.selectedLayer === "smallParticles"
           ? colorRgba
-          : "rgba(255, 0, 0, 0.5)";
+          : "rgba(255, 0, 0, 0.6)";
 
       if (this.isChecked) {
         this.highlightTilesInsideEllipse(ellipse.getGeometry(), highlightColor);
       }
     },
     highlightTilesInsideEllipse(ellipseGeometry, colorRgba) {
-      const tileFeatures = this.tileGridSource.getFeatures();
+      const districtsToHighlight = new Set();
 
-      tileFeatures.forEach((tile) => {
+      this.tilesData.forEach(({ district, tile }) => {
         const tileGeometry = tile.getGeometry();
         const isIntersecting = ellipseGeometry.intersectsExtent(
           tileGeometry.getExtent()
         );
 
         if (isIntersecting) {
+          districtsToHighlight.add(district);
+        }
+      });
+
+      this.tilesData.forEach(({ district, tile }) => {
+        if (districtsToHighlight.has(district)) {
           tile.set("isDanger", true);
           tile.setStyle(
             new Style({
@@ -671,19 +689,20 @@ export default {
             })
           );
         } else if (!tile.get("isDanger")) {
-            tile.setStyle(
-              new Style({
-                fill: new Fill({
-                  color: `rgba(171, 209, 98, 0.6)`,
-                }),
-              })
-            );
-          }
+          tile.setStyle(
+            new Style({
+              fill: new Fill({
+                color: this.colors[1],
+              }),
+            })
+          );
+        }
       });
 
       this.clearDrawnCircles();
       this.removeAllPoints();
     },
+
     hexToRgbA(hex) {
       var c;
       if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
