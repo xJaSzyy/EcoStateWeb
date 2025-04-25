@@ -664,38 +664,34 @@ export default {
         this.highlightTilesInsideEllipse(ellipse.getGeometry(), highlightColor);
       }
     },
-    highlightTilesInsideEllipse(ellipseGeometry, colorRgba) {
-      const districtsToHighlight = new Set();
+    highlightTilesInsideEllipse(ellipseGeometry, dangerColor) {
+      const tileFeatures = this.tileGridSource.getFeatures();
 
-      this.tilesData.forEach(({ district, tile }) => {
+      tileFeatures.forEach((tile) => {
         const tileGeometry = tile.getGeometry();
         const isIntersecting = ellipseGeometry.intersectsExtent(
           tileGeometry.getExtent()
         );
 
         if (isIntersecting) {
-          districtsToHighlight.add(district);
-        }
-      });
-
-      this.tilesData.forEach(({ district, tile }) => {
-        if (districtsToHighlight.has(district)) {
           tile.set("isDanger", true);
           tile.setStyle(
             new Style({
               fill: new Fill({
-                color: colorRgba,
+                color: dangerColor,
               }),
             })
           );
-        } else if (!tile.get("isDanger")) {
-          tile.setStyle(
-            new Style({
-              fill: new Fill({
-                color: this.colors[0],
-              }),
-            })
-          );
+        } else {
+          if (!tile.get("isDanger")) {
+            tile.setStyle(
+              new Style({
+                fill: new Fill({
+                  color: this.colors[0],
+                }),
+              })
+            );
+          }
         }
       });
 
