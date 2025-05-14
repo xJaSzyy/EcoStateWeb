@@ -20,7 +20,10 @@
     :startData="simulationStartData"
     v-if="showSimulationPanel"
     @buildSimulation="handleSimulationStart"
-    @close="showSimulationPanel = false; fetchAndUpdateData();"
+    @close="
+      showSimulationPanel = false;
+      fetchAndUpdateData();
+    "
   />
   <div id="map" class="map"></div>
   <div class="tools" v-if="!showButtons">
@@ -244,7 +247,7 @@ export default {
             tileFeature.setStyle(
               new Style({
                 fill: new Fill({
-                  color: `rgba(255, 255, 255, 0.6)`,
+                  color: this.colors[0],
                 }),
               })
             );
@@ -674,20 +677,26 @@ export default {
         );
 
         if (isIntersecting) {
-          tile.set("isDanger", true);
-          tile.setStyle(
-            new Style({
-              fill: new Fill({
-                color: dangerColor,
-              }),
-            })
-          );
-        } else {
-          if (!tile.get("isDanger")) {
+          if (tile.get("color")) {
+            if (
+              this.colors.indexOf(tile.get("color")) <
+              this.colors.indexOf(dangerColor)
+            ) {
+              tile.set("color", dangerColor);
+              tile.setStyle(
+                new Style({
+                  fill: new Fill({
+                    color: dangerColor,
+                  }),
+                })
+              );
+            }
+          } else {
+            tile.set("color", dangerColor);
             tile.setStyle(
               new Style({
                 fill: new Fill({
-                  color: this.colors[0],
+                  color: dangerColor,
                 }),
               })
             );
