@@ -4,7 +4,7 @@
     :isTransparent="true"
     @layerChanged="updateLayer"
   />
-  <EnterpriseRating />
+  <!-- <<  <EnterpriseRating /> -->
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
   <Popup
     :show="showPopup"

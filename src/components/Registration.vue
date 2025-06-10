@@ -110,7 +110,7 @@ export default {
 
 .input-group input:focus {
   outline: none;
-  border-color: #76a34f;
+  border-color: #4BA9FF;
   background-color: white;
 }
 
@@ -119,7 +119,7 @@ export default {
   padding: 12px;
   font-size: 16px;
   color: white;
-  background-color: #76a34f;
+  background-color: #4BA9FF;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -127,7 +127,7 @@ export default {
 }
 
 .submit-button:hover {
-  background-color: #5e883c;
+  background-color: #419ff7;
 }
 
 .login-link {
@@ -137,7 +137,7 @@ export default {
 }
 
 .login-link a {
-  color: #76a34f;
+  color: #4BA9FF;
   text-decoration: none;
 }
 

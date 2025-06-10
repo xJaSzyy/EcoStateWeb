@@ -101,7 +101,7 @@ export default {
   padding: 12px;
   font-size: 16px;
   color: white;
-  background-color: #76a34f;
+  background-color: #4BA9FF;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -109,7 +109,7 @@ export default {
 }
 
 .submit-button:hover {
-  background-color: #5e883c;
+  background-color: #419ff7;
 }
 
 .registration-link {
@@ -119,7 +119,7 @@ export default {
 }
 
 .registration-link a {
-  color: #76a34f;
+  color: #4BA9FF;
   text-decoration: none;
 }
 
