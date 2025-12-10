@@ -82,9 +82,34 @@
         />
         <span>{{ formData.windSpeed }} м/с</span>
       </div>
-    </div>
 
-    <button class="build-button" @click="emitSimulationData">Построить</button>
+      <div class="slider-row">
+        <label>Направление ветра:</label>
+        <input
+            v-model.number="formData.windDirection"
+            type="range"
+            min="0"
+            max="360"
+            step="15"
+            @input="updateWindDirection"
+        />
+        <span>{{ formData.windDirection }}°</span>
+      </div>
+
+      <div class="wind-direction-display">
+        <div class="compass">
+          <div class="compass-rose">
+            <div class="compass-point" v-for="(point, index) in compassPoints"
+                 :key="index" :style="{ transform: `rotate(${point.deg}deg)` }">
+              {{ point.label }}
+            </div>
+            <div class="wind-arrow" :style="{ transform: `rotate(${formData.windDirection}deg)` }">
+              ↑
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -104,6 +129,7 @@ const formData = reactive({
   heightSource: 82.5,
   diameterSource: 6,
   windSpeed: 15,
+  windDirection: 0
 });
 
 watch(
