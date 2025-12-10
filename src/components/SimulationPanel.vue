@@ -9,16 +9,16 @@
         </svg>
       </button>
     </div>
-    
+
     <div class="sliders">
       <div class="slider-row">
         <label>Температура выбрасываемой ГВС:</label>
         <input
-          v-model.number="formData.ejectedTemp"
-          type="range"
-          min="235"
-          max="265"
-          step="1"
+            v-model.number="formData.ejectedTemp"
+            type="range"
+            min="235"
+            max="265"
+            step="1"
         />
         <span>{{ formData.ejectedTemp }}°C</span>
       </div>
@@ -26,11 +26,11 @@
       <div class="slider-row">
         <label>Температура атмосферного воздуха:</label>
         <input
-          v-model.number="formData.airTemp"
-          type="range"
-          min="-40"
-          max="40"
-          step="1"
+            v-model.number="formData.airTemp"
+            type="range"
+            min="-40"
+            max="40"
+            step="1"
         />
         <span>{{ formData.airTemp }}°C</span>
       </div>
@@ -38,11 +38,11 @@
       <div class="slider-row">
         <label>Средняя скорость выхода ГВС:</label>
         <input
-          v-model.number="formData.avgExitSpeed"
-          type="range"
-          min="15"
-          max="31"
-          step="1"
+            v-model.number="formData.avgExitSpeed"
+            type="range"
+            min="15"
+            max="31"
+            step="1"
         />
         <span>{{ formData.avgExitSpeed }} м/с</span>
       </div>
@@ -50,11 +50,11 @@
       <div class="slider-row">
         <label>Высота источника выброса:</label>
         <input
-          v-model.number="formData.heightSource"
-          type="range"
-          min="15"
-          max="150"
-          step="1"
+            v-model.number="formData.heightSource"
+            type="range"
+            min="15"
+            max="150"
+            step="1"
         />
         <span>{{ formData.heightSource }} м</span>
       </div>
@@ -62,11 +62,11 @@
       <div class="slider-row">
         <label>Диаметр устья источника:</label>
         <input
-          v-model.number="formData.diameterSource"
-          type="range"
-          min="1"
-          max="11"
-          step="1"
+            v-model.number="formData.diameterSource"
+            type="range"
+            min="1"
+            max="11"
+            step="1"
         />
         <span>{{ formData.diameterSource }} м</span>
       </div>
@@ -74,24 +74,53 @@
       <div class="slider-row">
         <label>Скорость ветра:</label>
         <input
-          v-model.number="formData.windSpeed"
-          type="range"
-          min="0"
-          max="30"
-          step="1"
+            v-model.number="formData.windSpeed"
+            type="range"
+            min="0"
+            max="30"
+            step="1"
         />
         <span>{{ formData.windSpeed }} м/с</span>
       </div>
-    </div>
 
-    <button class="build-button" @click="emitSimulationData">Построить</button>
+      <!-- Добавляем регулировку направления ветра -->
+      <div class="wind-direction-row">
+        <label>Направление ветра:</label>
+        <div class="wind-direction-control">
+          <input
+              v-model.number="formData.windDirection"
+              type="range"
+              min="0"
+              max="360"
+              step="1"
+              class="wind-direction-slider"
+          />
+          <div class="wind-visual">
+            <div class="compass-rose">
+              <span class="compass-point north">N</span>
+              <span class="compass-point east">E</span>
+              <span class="compass-point south">S</span>
+              <span class="compass-point west">W</span>
+              <div class="wind-arrow" :style="{ transform: `rotate(${formData.windDirection}deg)` }">
+                ↑
+              </div>
+            </div>
+            <div class="wind-info">
+              <span class="wind-degree">{{ formData.windDirection }}°</span>
+              <span class="wind-cardinal">{{ cardinalDirection }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, watch } from "vue";
+import { reactive, watch, computed } from "vue";
 
-const emit = defineEmits(["buildSimulation", "close"]); 
+const emit = defineEmits(["buildSimulation", "close"]);
 
 const props = defineProps({
   startData: Object,
@@ -104,24 +133,38 @@ const formData = reactive({
   heightSource: 82.5,
   diameterSource: 6,
   windSpeed: 15,
+  windDirection: 0
+});
+
+// Вычисляемое свойство для направления ветра по сторонам света
+const cardinalDirection = computed(() => {
+  const deg = formData.windDirection;
+  if (deg >= 337.5 || deg < 22.5) return 'Север';
+  if (deg < 67.5) return 'Северо-Восток';
+  if (deg < 112.5) return 'Восток';
+  if (deg < 157.5) return 'Юго-Восток';
+  if (deg < 202.5) return 'Юг';
+  if (deg < 247.5) return 'Юго-Запад';
+  if (deg < 292.5) return 'Запад';
+  return 'Северо-Запад';
 });
 
 watch(
-  () => props.startData,
-  (newData) => {
-    if (newData) {
-      Object.assign(formData, newData);
-    }
-  },
-  { immediate: true }
+    () => props.startData,
+    (newData) => {
+      if (newData) {
+        Object.assign(formData, newData);
+      }
+    },
+    { immediate: true }
 );
 
 watch(
-  formData,
-  () => {
-    emitSimulationData();
-  },
-  { deep: true }
+    formData,
+    () => {
+      emitSimulationData();
+    },
+    { deep: true }
 );
 
 const emitSimulationData = () => {
@@ -137,8 +180,141 @@ const emitClose = () => {
 };
 </script>
 
-
 <style scoped>
+/* Стили для блока направления ветра */
+.wind-direction-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.wind-direction-row label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #444;
+}
+
+.wind-direction-control {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.wind-direction-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right,
+  #4CAF50 0%,    /* 0° - 90° */
+  #FF9800 25%,   /* 90° - 180° */
+  #F44336 50%,   /* 180° - 270° */
+  #2196F3 75%,   /* 270° - 360° */
+  #4CAF50 100%   /* 360° */
+  );
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.wind-direction-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #007bff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.wind-direction-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #007bff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.wind-visual {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.compass-rose {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border: 2px solid #e0e0e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compass-point {
+  position: absolute;
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+}
+
+.compass-point.north {
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-point.east {
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compass-point.south {
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-point.west {
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.wind-arrow {
+  position: absolute;
+  font-size: 24px;
+  color: #007bff;
+  transition: transform 0.2s ease;
+}
+
+.wind-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+}
+
+.wind-degree {
+  font-size: 24px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.wind-cardinal {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  margin-top: 4px;
+}
+
 .panel-container {
   position: fixed;
   right: 0;

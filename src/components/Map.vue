@@ -4,7 +4,7 @@
     :isTransparent="true"
     @layerChanged="updateLayer"
   />
-  <!-- <<  <EnterpriseRating /> -->
+  <EnterpriseRating />
   <WeatherInfo @weatherDataUpdated="updateWeatherData" />
   <Popup
     :show="showPopup"
@@ -116,7 +116,6 @@ export default {
       map: null,
       vectorSource: new VectorSource(),
       tileGridSource: new VectorSource(),
-      windDirection: 0,
       windSpeed: 0,
       airTemp: 0,
       showPopup: false,
@@ -138,7 +137,6 @@ export default {
       currentEnterprise: null,
       currentSource: null,
       simulationStartData: null,
-      showSimulationPanel: false,
       tilesData: [],
       colors: [
         `rgba(171, 209, 98, 0.6)`,
@@ -147,6 +145,7 @@ export default {
         `rgba(246, 104, 106, 0.6)`,
         `rgba(164, 125, 184, 0.6)`,
       ],
+      lastWindDirection: null
     };
   },
   watch: {
@@ -288,7 +287,15 @@ export default {
     },
     async fetchAndUpdateData() {
       this.vectorSource.clear();
+
       await this.fetchAllCirclesData();
+
+      this.enterprisesData.forEach(enterprise => {
+        enterprise.emissionSources.forEach(source => {
+          source.windDirection = this.lastWindDirection;
+        });
+      });
+
       this.drawPoints();
       this.drawEllipse();
     },
@@ -306,9 +313,16 @@ export default {
       this.vectorSource.clear();
       this.windSpeed = data.windSpeed;
       this.airTemp = data.airTemp;
-      this.windDirection = data.windDirection;
 
       await this.fetchAllCirclesData();
+
+      this.enterprisesData.forEach(enterprise => {
+        enterprise.emissionSources.forEach(source => {
+          source.windDirection = data.windDirection;
+        });
+      });
+
+      this.lastWindDirection = data.windDirection;
 
       this.drawPoints();
       this.drawEllipse();
@@ -504,6 +518,7 @@ export default {
         if (!clickedOnFeature) {
           this.showPopup = false;
           this.showSimulationPanel = false;
+          this.fetchAndUpdateData();
         }
       });
     },
@@ -620,7 +635,7 @@ export default {
 
       const angle =
         0.5 * Math.PI -
-        ((this.windDirection + source.dangerZoneAngle) * Math.PI) / 180;
+        ((source.windDirection + source.dangerZoneAngle) * Math.PI) / 180;
 
       const points = [];
 
@@ -756,6 +771,7 @@ export default {
         const sourceIndex = this.enterprisesData[
           enterpriseIndex
         ].emissionSources.indexOf(this.currentSource);
+        this.enterprisesData[enterpriseIndex].emissionSources[sourceIndex].windDirection = data.windDirection;
         this.fetchConcentrationCalculateSimulation(
           enterpriseIndex,
           sourceIndex,
@@ -773,6 +789,7 @@ export default {
         heightSource: this.currentSource.heightSource,
         diameterSource: this.currentSource.diameterSource,
         windSpeed: this.windSpeed,
+        windDirection: this.currentSource.windDirection,
       };
 
       this.showSimulationPanel = true;
