@@ -8,7 +8,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import About from './components/Main.vue';
 import Login from './components/Login.vue';
 import Registration from './components/Registration.vue';
-import Map from './components/TestMap.vue';
+import Map from './components/Map.vue';
 
 const routes = [
     { path: '/', component: Map },

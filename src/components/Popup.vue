@@ -5,8 +5,12 @@
     <div class="popup-content">
       <div v-if="featureInfo">
         <div class="popup-row"><b>Название:</b> {{ featureInfo.name }}</div>
-        <div class="popup-row"><b>Диаметр источника:</b> {{ featureInfo.diameterSource }} м</div>
-        <div class="popup-row"><b>Высота источника:</b> {{ featureInfo.heightSource }} м</div>
+        <div class="popup-row">
+          <b>Диаметр источника:</b> {{ featureInfo.diameterSource }} м
+        </div>
+        <div class="popup-row">
+          <b>Высота источника:</b> {{ featureInfo.heightSource }} м
+        </div>
       </div>
 
       <div v-if="chartData">
@@ -14,6 +18,7 @@
       </div>
     </div>
 
+    <button class="change-btn" @click="$emit('change')">Изменить</button>
     <button class="close-btn" @click="$emit('close')">Закрыть</button>
   </div>
 </template>
@@ -29,9 +34,9 @@ export default {
     title: String,
     x: Number,
     y: Number,
-    featureInfo: Object, 
-    chartData: Object 
-  }
+    featureInfo: Object,
+    chartData: Object,
+  },
 };
 </script>
 
@@ -46,7 +51,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 1000;
+  z-index: 1;
   text-align: left;
   transform: translate(-50%, -100%);
 }
@@ -64,10 +69,23 @@ export default {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  margin-top: 10px;
 }
 
 .close-btn:hover {
   background: #cc0000;
+}
+
+.change-btn {
+  background: #4d91ff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.change-btn:hover {
+  background: #0e55c8;
 }
 </style>
